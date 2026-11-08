@@ -1,0 +1,27 @@
+{
+  "name": "session-1-function-calling-apis",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "06:openai": "node --env-file=../.env 06-three-apis/openai.ts",
+    "06:anthropic": "node --env-file=../.env 06-three-apis/anthropic.ts",
+    "06:mastra": "node --env-file=../.env 06-three-apis/mastra.ts",
+    "06:subagent": "node --env-file=../.env 06-three-apis/mastra-subagent.ts",
+    "07:form": "node --env-file=../.env 07-structured-form/main.ts",
+    "07:compare": "node --env-file=../.env 07-structured-form/compare.ts",
+    "08:ptc": "node --env-file=../.env 08-programmatic-tool-calling/main.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
+    "@mastra/core": "^1.82.0",
+    "openai": "^7.53.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}

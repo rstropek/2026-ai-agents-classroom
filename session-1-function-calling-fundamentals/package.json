@@ -1,0 +1,24 @@
+{
+  "name": "session-1-function-calling-fundamentals",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "01:sdk": "node --env-file=../.env 01-sdk/main.ts",
+    "02:curl": "bash 02-curl/function-call.sh",
+    "03:debug": "node --env-file=../.env 03-openrouter-debug/main.ts",
+    "04:templates": "node 04-chat-templates/main.ts",
+    "05:raw": "node --env-file=../.env 05-raw-completion/main.ts",
+    "05:raw:qwen": "node --env-file=../.env 05-raw-completion/main.ts qwen"
+  },
+  "dependencies": {
+    "@huggingface/jinja": "^0.5.11",
+    "openai": "^7.53.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}

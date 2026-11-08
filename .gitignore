@@ -1,0 +1,5 @@
+.env
+node_modules/
+
+/.quarto/
+/_output/
