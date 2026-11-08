@@ -1,0 +1,170 @@
+:root {
+  --ink: #1d2733;
+  --muted: #5b6776;
+  --line: #dde3ea;
+  --panel: #f5f7fa;
+  --accent: #1f6f8b;
+  --gain: #2f7d5b;
+  --cost: #b2592c;
+}
+
+.slidev-layout {
+  color: var(--ink);
+  padding: 1.75rem 3rem 1.5rem;
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
+.slidev-layout h1 {
+  color: var(--ink);
+  font-size: 1.85rem;
+  font-weight: 650;
+  line-height: 1.2;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 2px solid var(--accent);
+}
+
+/* The default theme fades the paragraph after a heading. */
+.slidev-layout h1 + p {
+  opacity: 1;
+}
+
+.slidev-layout p {
+  margin: 0.55rem 0;
+}
+
+.slidev-layout ul {
+  margin: 0.35rem 0;
+  padding-left: 1.15rem;
+}
+
+.slidev-layout li {
+  margin: 0.2rem 0;
+  list-style: disc;
+}
+
+.slidev-layout h3 {
+  color: var(--accent);
+  font-size: 1.05rem;
+  font-weight: 650;
+  margin: 0.5rem 0 0.2rem;
+  opacity: 1;
+}
+
+.slidev-layout :not(pre) > code {
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-size: 0.86em;
+  padding: 0.05em 0.3em;
+}
+
+.slidev-layout pre.slidev-code,
+.slidev-layout .slidev-code {
+  background: var(--panel) !important;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  padding: 0.6rem 0.8rem;
+}
+
+.slidev-layout table {
+  border-collapse: collapse;
+  font-size: 0.93rem;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+
+.slidev-layout th {
+  border-bottom: 2px solid var(--accent);
+  color: var(--ink);
+  font-weight: 650;
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+}
+
+.slidev-layout td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.3rem 0.6rem;
+  vertical-align: top;
+}
+
+.columns {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+}
+
+.tradeoff {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 0.7rem;
+}
+
+.gain,
+.cost,
+.box {
+  background: var(--panel);
+  border-radius: 5px;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.9rem;
+}
+
+.gain {
+  border-left: 4px solid var(--gain);
+}
+
+.cost {
+  border-left: 4px solid var(--cost);
+}
+
+.box {
+  border-left: 4px solid var(--accent);
+  margin-top: 0.7rem;
+}
+
+.gain h3 {
+  color: var(--gain);
+  margin-top: 0.1rem;
+}
+
+.cost h3 {
+  color: var(--cost);
+  margin-top: 0.1rem;
+}
+
+.box h3 {
+  margin-top: 0.1rem;
+}
+
+.small {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.mermaid {
+  display: flex;
+  justify-content: center;
+}
+
+.title-slide h1 {
+  border: none;
+  font-size: 3rem;
+  margin-bottom: 0.4rem;
+}
+
+.title-slide p {
+  color: var(--muted);
+  font-size: 1.3rem;
+}
+
+.title-slide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}

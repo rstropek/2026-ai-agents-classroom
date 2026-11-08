@@ -1,0 +1,27 @@
+{
+  "name": "session-1-tool-design",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "slides": "slidev slides.md --open",
+    "slides:build": "slidev build slides.md",
+    "slides:export": "slidev export slides.md --output tool-design.pdf",
+    "09:generic": "node --env-file=../.env 09-generic-tools/main.ts",
+    "10:bash": "node 10-bash-tools/try-bash.ts",
+    "10:agent": "node --env-file=../.env 10-bash-tools/main.ts"
+  },
+  "dependencies": {
+    "just-bash": "^3.6.0",
+    "openai": "^7.53.0"
+  },
+  "devDependencies": {
+    "@slidev/cli": "^53.1.0",
+    "@slidev/theme-default": "^0.25.0",
+    "@types/node": "^24.19.2",
+    "playwright-chromium": "^1.65.0",
+    "typescript": "^7.0.2"
+  }
+}
