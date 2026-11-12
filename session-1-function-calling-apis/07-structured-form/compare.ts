@@ -2,12 +2,16 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { CATEGORIES, categorize, type Category } from "./jev.ts";
 
+// OpenRouter
 const MODEL = "openai/gpt-5.4-mini";
-
 const client = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY,
 });
+
+// OpenAI: comment out the lines above and uncomment these two. Jev still needs OpenRouter.
+// const MODEL = "gpt-5.4-mini";
+// const client = new OpenAI(); // Reads OPENAI_API_KEY.
 
 const names = Object.keys(CATEGORIES) as [Category, ...Category[]];
 const Answer = z.object({
@@ -30,7 +34,8 @@ async function categorizeWithLlm(text: string) {
       json_schema: { name: "category", strict: true, schema: z.toJSONSchema(Answer) },
     },
   });
-  const usage = response.usage as OpenAI.CompletionUsage & { cost: number };
+  // OpenRouter adds `cost` to `usage`. OpenAI doesn't, so the total says n/a there.
+  const usage = response.usage as OpenAI.CompletionUsage & { cost?: number };
   return { answer: Answer.parse(JSON.parse(response.choices[0].message.content ?? "")), cost: usage.cost };
 }
 
@@ -57,7 +62,7 @@ for (const input of INPUTS) {
   totals.jevMs += jev.ms;
   totals.jevCost += jev.cost;
   totals.llmMs += llm.ms;
-  totals.llmCost += llm.cost;
+  totals.llmCost += llm.cost ?? NaN;
 
   console.log(`\n"${input}"`);
   console.log(`  Jev ${String(jev.ms).padStart(5)} ms: ${jev.answer.choice}, confidence ${jev.answer.confidence}, ${JSON.stringify(jev.answer.probabilities)}`);
@@ -65,4 +70,5 @@ for (const input of INPUTS) {
 }
 
 console.log(`\nJev total: ${totals.jevMs} ms, $${totals.jevCost.toFixed(6)}`);
-console.log(`LLM total: ${totals.llmMs} ms, $${totals.llmCost.toFixed(6)}`);
+const llmCost = Number.isNaN(totals.llmCost) ? "n/a" : `$${totals.llmCost.toFixed(6)}`;
+console.log(`LLM total: ${totals.llmMs} ms, ${llmCost}`);

@@ -7,8 +7,15 @@ set -a
 source ../../.env
 set +a
 
+# OpenRouter
 URL=https://openrouter.ai/api/v1/chat/completions
 MODEL=openai/gpt-oss-20b
+API_KEY=$OPENROUTER_API_KEY
+
+# OpenAI: comment out the three lines above and uncomment these three.
+# URL=https://api.openai.com/v1/chat/completions
+# MODEL=gpt-5.4-mini
+# API_KEY=$OPENAI_API_KEY
 
 TOOLS=$(cat <<'JSON'
 [
@@ -45,7 +52,7 @@ send() {
   jq . <<<"$request" >&2
 
   curl -sS "$URL" \
-    -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+    -H "Authorization: Bearer $API_KEY" \
     -H "Content-Type: application/json" \
     -d "$request"
 }

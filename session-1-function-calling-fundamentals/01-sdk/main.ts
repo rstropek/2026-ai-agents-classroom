@@ -1,11 +1,15 @@
 import OpenAI from "openai";
 
+// OpenRouter
 const MODEL = "openai/gpt-oss-20b";
-
 const client = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY,
 });
+
+// OpenAI: comment out the lines above and uncomment these two.
+// const MODEL = "gpt-5.4-mini";
+// const client = new OpenAI(); // Reads OPENAI_API_KEY.
 
 const tools: OpenAI.Chat.ChatCompletionTool[] = [
   {

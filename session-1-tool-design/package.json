@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "just-bash": "^3.6.0",
-    "openai": "^7.53.0"
+    "openai": "^7.55.0"
   },
   "devDependencies": {
     "@slidev/cli": "^53.1.0",

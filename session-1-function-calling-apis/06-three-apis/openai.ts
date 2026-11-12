@@ -1,10 +1,14 @@
 import OpenAI from "openai";
 import { MAX_STEPS, MODEL, QUESTION, SYSTEM, getWeather } from "./shared.ts";
 
+// OpenRouter
 const client = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY,
 });
+
+// OpenAI: comment out the lines above, uncomment this one, and switch MODEL in shared.ts.
+// const client = new OpenAI(); // Reads OPENAI_API_KEY.
 
 const tools: OpenAI.Chat.ChatCompletionTool[] = [
   {

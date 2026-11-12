@@ -2,15 +2,19 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { categorize } from "./jev.ts";
 
-const MODEL = "openai/gpt-5.4-mini";
-
 // A fixed date keeps the demo reproducible. A real app uses the current date.
 const TODAY = "2026-11-12";
 
+// OpenRouter
+const MODEL = "openai/gpt-5.4-mini";
 const client = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY,
 });
+
+// OpenAI: comment out the lines above and uncomment these two. Jev still needs OpenRouter.
+// const MODEL = "gpt-5.4-mini";
+// const client = new OpenAI(); // Reads OPENAI_API_KEY.
 
 // One schema for both directions: what the UI sends and what the UI gets back.
 const TripForm = z.object({

@@ -49,7 +49,7 @@ npm install
 
 A full run of all five steps costs well below one cent on OpenRouter.
 
-**Participants.** The announcement asks participants for an OpenAI key or Azure Foundry access. Steps 1 and 2 work with those after changing the base URL and the model name, because both only use the standard Chat Completions API. Step 4 needs no key at all. Steps 3 and 5 depend on OpenRouter, so participants without an OpenRouter key watch them on your screen.
+**Participants.** The announcement asks participants for an OpenAI key or Azure Foundry access. Steps 1 and 2 only use the standard Chat Completions API. Both files contain a commented-out OpenAI block with `gpt-5.4-mini` and `OPENAI_API_KEY`, tested against the OpenAI API. Participants swap it for the OpenRouter block. Step 4 needs no key at all. Steps 3 and 5 depend on OpenRouter, so participants without an OpenRouter key watch them on your screen.
 
 ## Step 1: the developer's view
 

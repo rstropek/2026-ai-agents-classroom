@@ -16,7 +16,7 @@ You need Node.js 24 or newer and the `.env` file in the repository root with `OP
 npm install
 ```
 
-**Participants.** Step 7 and `06:openai` use the standard Chat Completions API, so they should work with an OpenAI key after changing the base URL and the model name. `06:mastra` and `06:subagent` read `OPENAI_API_KEY` if you change their model strings to an `openai/...` model. Both paths are untested. `06:anthropic` needs OpenRouter or an Anthropic key, so participants with only an OpenAI key watch that one on your screen. The Jev parts of step 7 use OpenRouter or a TypeSafe key.
+**Participants.** Every file that can run with an OpenAI key has a commented-out OpenAI variant next to the OpenRouter lines, and all of them are tested against the OpenAI API with `gpt-5.4-mini`. In step 6, participants switch `MODEL` in `shared.ts`, then the client in `openai.ts` or the `model` line in the Mastra files. `06:anthropic` needs OpenRouter or an Anthropic key, so participants with only an OpenAI key watch that one on your screen. In step 7, the Jev parts still use OpenRouter or a TypeSafe key, and `07:compare` prints `n/a` for the LLM cost, because only OpenRouter reports it.
 
 Step 8 is the exception in the other direction. It needs `OPENAI_API_KEY` in `.env`, because OpenRouter removes the `allowed_callers` field from the request before it reaches OpenAI.
 

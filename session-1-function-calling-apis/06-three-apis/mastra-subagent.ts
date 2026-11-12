@@ -21,6 +21,8 @@ const weatherAgent = new Agent({
   description: "Answers questions about the current weather in one or more cities.",
   instructions: "Look up the weather and report the temperature and condition for each city.",
   model: `openrouter/${MODEL}`,
+  // OpenAI: use this line instead, and switch MODEL in shared.ts.
+  // model: `openai/${MODEL}`, // Reads OPENAI_API_KEY.
   tools: { get_weather: weatherTool },
 });
 
@@ -29,6 +31,8 @@ const supervisor = new Agent({
   name: "Supervisor",
   instructions: SYSTEM,
   model: `openrouter/${MODEL}`,
+  // OpenAI: use this line instead, and switch MODEL in shared.ts.
+  // model: `openai/${MODEL}`, // Reads OPENAI_API_KEY.
   // This line turns the agent into a tool called agent-weather.
   agents: { weather: weatherAgent },
 });

@@ -15,9 +15,9 @@
     "08:ptc": "node --env-file=../.env 08-programmatic-tool-calling/main.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.6.0",
+    "@anthropic-ai/sdk": "^1.8.0",
     "@mastra/core": "^1.82.0",
-    "openai": "^7.53.0",
+    "openai": "^7.55.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {

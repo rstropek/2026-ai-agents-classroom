@@ -15,6 +15,8 @@ const agent = new Agent({
   name: "Weather agent",
   instructions: SYSTEM,
   model: `openrouter/${MODEL}`,
+  // OpenAI: use this line instead, and switch MODEL in shared.ts.
+  // model: `openai/${MODEL}`, // Reads OPENAI_API_KEY.
   tools: { get_weather: weatherTool },
 });
 

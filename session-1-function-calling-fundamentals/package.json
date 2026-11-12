@@ -14,8 +14,8 @@
     "05:raw:qwen": "node --env-file=../.env 05-raw-completion/main.ts qwen"
   },
   "dependencies": {
-    "@huggingface/jinja": "^0.5.11",
-    "openai": "^7.53.0"
+    "@huggingface/jinja": "^0.5.12",
+    "openai": "^7.55.0"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
