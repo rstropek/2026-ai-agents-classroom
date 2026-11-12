@@ -36,6 +36,7 @@ export async function runAgent(tools: OpenAI.Responses.Tool[], handlers: Handler
         // A broken call is one more thing the model can correct, so it gets the message.
         output = `Error: ${(error as Error).message}`;
       }
+      // Breakpoint 9.1: one tool call, its result, and the growing input.
       console.log(`\n${call.name} ${call.arguments}\n  -> ${output}`);
       input.push({ type: "function_call_output", call_id: call.call_id, output });
     }

@@ -31,8 +31,10 @@ const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
 ];
 
 for (let step = 1; step <= MAX_STEPS; step++) {
+  // Breakpoint 6.2: the history this step sends.
   const response = await client.chat.completions.create({ model: MODEL, messages, tools });
   const { message, finish_reason } = response.choices[0];
+  // Breakpoint 6.3: two tool calls in one message.
   console.log(`Step ${step}: finish_reason = ${finish_reason}`);
 
   if (finish_reason !== "tool_calls") {

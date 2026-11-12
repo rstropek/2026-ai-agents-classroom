@@ -27,6 +27,7 @@ const tools: OpenAI.Chat.ChatCompletionTool[] = [
 ];
 
 function getWeather(city: string) {
+  // Breakpoint 1.2: your code runs the tool, the model isn't involved.
   return { city, temperature: 7, condition: "fog" };
 }
 
@@ -37,6 +38,7 @@ const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
 
 // Turn 1: the model sees the question and the tool, and asks for a call.
 const first = await client.chat.completions.create({ model: MODEL, messages, tools });
+// Breakpoint 1.1: the raw turn 1 response.
 const assistantMessage = first.choices[0].message;
 const toolCall = assistantMessage.tool_calls?.[0];
 if (toolCall?.type !== "function") {
@@ -55,5 +57,6 @@ messages.push(assistantMessage, {
   tool_call_id: toolCall.id,
   content: JSON.stringify(result),
 });
+// Breakpoint 1.3: the complete history that goes out in turn 2.
 const second = await client.chat.completions.create({ model: MODEL, messages, tools });
 console.log(`Final answer: ${second.choices[0].message.content}`);

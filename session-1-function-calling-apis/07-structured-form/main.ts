@@ -59,6 +59,7 @@ async function updateForm(form: TripForm, userInput: string) {
   console.log(`Model text: ${text}`);
 
   // The answer is still text that the model wrote, so parse and validate it.
+  // Breakpoint 7.1: the whole response, and the text inside it.
   return AgentResponse.parse(JSON.parse(text));
 }
 
@@ -105,6 +106,7 @@ for (const input of inputs) {
   const jevMs = Math.round(performance.now() - jevStart);
   console.log(`Jev (${jevMs} ms): ${answer.choice}, confidence ${answer.confidence}, ${JSON.stringify(answer.probabilities)}`);
 
+  // Breakpoint 7.3: edit answer.confidence here to send the input to the LLM anyway.
   if (answer.choice === "unrelated" && answer.confidence >= UNRELATED_THRESHOLD) {
     console.log("No LLM call. The UI shows a fixed hint.");
     continue;

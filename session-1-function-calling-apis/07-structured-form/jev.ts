@@ -35,5 +35,6 @@ export async function categorize(text: string) {
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   }
   const data = await response.json();
+  // Breakpoint 7.2: probabilities per category, and the cost of one decision.
   return { answer: data.answers.category as ChoiceAnswer, cost: data.usage.cost as number };
 }

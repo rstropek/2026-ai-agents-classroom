@@ -92,6 +92,7 @@ async function run(mode: "direct" | "programmatic") {
     // Program items have to go back too, or the service can't resume the program.
     input.push(...toResponseInputItems(response.output));
 
+    // Breakpoint 8.1 (condition: mode === "programmatic"): output item types and usage.
     for (const item of response.output) {
       if (item.type === "program") {
         console.log(`Program the model wrote:\n\n${item.code}\n`);
@@ -110,6 +111,7 @@ async function run(mode: "direct" | "programmatic") {
     for (const call of calls) {
       toolCalls++;
       const result = getForecast(JSON.parse(call.arguments).city);
+      // Breakpoint 8.2: call.caller names the paused program.
       input.push({
         type: "function_call_output",
         call_id: call.call_id,

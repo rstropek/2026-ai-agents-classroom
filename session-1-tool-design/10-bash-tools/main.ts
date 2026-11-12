@@ -28,6 +28,7 @@ await runAgent(
   {
     bash: async ({ command }) => {
       const { stdout, stderr, exitCode } = await bash.exec(command);
+      // Breakpoint 10.3: stdout, stderr, and exit code of the model's command.
       const output = `${stdout}${stderr}`;
       // The tool result needs a limit too, and it has to say that it cut something.
       const shown =

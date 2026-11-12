@@ -46,6 +46,7 @@ const highlight = (prompt: string) =>
 for (const [name, url] of Object.entries(TEMPLATE_URLS)) {
   const template = await downloadTemplate(url);
 
+  // Breakpoint 4.1: the Jinja source. Call renderPrompt from the Debug Console.
   console.log(`\n########## ${name} ##########`);
 
   console.log("\n=== Turn 1: the model decides whether to call a tool ===\n");

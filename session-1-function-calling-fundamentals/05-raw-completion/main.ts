@@ -22,6 +22,7 @@ const gptOss: Model = {
   templateUrl: TEMPLATE_URLS.gptOss,
   parseToolCall(text) {
     const call = text.match(/to=functions\.(\w+).*?<\|message\|>(.*?)(?:<\|call\|>|$)/s);
+    // Breakpoint 5.2: the parser's view of the text.
     return call ? { name: call[1], args: JSON.parse(call[2]) } : undefined;
   },
   finalAnswer(text) {
@@ -104,6 +105,7 @@ for (const model of models) {
   const first = await complete(model, renderPrompt(template, messages, tools));
   console.log(first);
 
+  // Breakpoint 5.1: the raw text the model wrote, special tokens included.
   const call = model.parseToolCall(first);
   if (!call) {
     throw new Error("The model did not call a tool.");
@@ -120,6 +122,7 @@ for (const model of models) {
   );
 
   console.log("\n=== Turn 2: what the model writes after the tool result ===\n");
+  // Breakpoint 5.3: the tool result is now part of the prompt string.
   const second = await complete(model, renderPrompt(template, messages, tools));
   console.log(second);
 

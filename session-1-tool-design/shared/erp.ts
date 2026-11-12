@@ -95,6 +95,7 @@ export const functions: ErpFunction[] = [
       if (typeof amount !== "number" || amount <= 0) {
         return { error: "amount must be a positive number." };
       }
+      // Breakpoint 9.3: the amount the model asked for, right before the limit check.
       if (amount > CREDIT_NOTE_LIMIT) {
         // Error message: why it failed and the call that gets the user further.
         return {
@@ -147,6 +148,7 @@ export function callFunction(name: string, args: Args) {
   // A generic call has no provider-side schema, so the ERP checks the arguments itself.
   const missing = fn.parameters.required.filter((key) => args[key] === undefined);
   const unknown = Object.keys(args).filter((key) => !(key in fn.parameters.properties));
+  // Breakpoint 9.2: args exactly as the model wrote them.
   if (missing.length > 0 || unknown.length > 0) {
     return {
       error: `Missing arguments: ${missing.join(", ") || "none"}. Unknown arguments: ${unknown.join(", ") || "none"}.`,

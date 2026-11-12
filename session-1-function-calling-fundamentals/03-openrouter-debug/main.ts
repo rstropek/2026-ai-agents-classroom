@@ -49,6 +49,7 @@ for (const model of MODELS) {
     .map((line) => JSON.parse(line.slice("data: ".length)));
   const debugChunk = chunks.find((chunk) => chunk.debug);
 
+  // Breakpoint 3.1: the stream chunks and the upstream body for this model.
   console.log(`\n===== ${model}, served by ${debugChunk?.provider ?? "unknown"} =====\n`);
   console.log(JSON.stringify(debugChunk?.debug.echo_upstream_body ?? null, null, 2));
 }

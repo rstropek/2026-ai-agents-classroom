@@ -31,6 +31,7 @@ function parseFlags(flags: string[]) {
 
 // One command for the whole ERP: the functions become subcommands.
 export const erp = defineCommand("erp", async (argv) => {
+  // Breakpoint 10.1: argv as just-bash parsed the command line.
   const [subcommand, ...rest] = argv;
 
   if (!subcommand || subcommand === "--help") {
@@ -70,6 +71,7 @@ export const erp = defineCommand("erp", async (argv) => {
   if (all) {
     const items = [...result.items];
     while (result.page?.next_cursor) {
+      // Breakpoint 10.2: paging inside the command, invisible to the model.
       result = callFunction(subcommand, { ...args, cursor: result.page.next_cursor });
       items.push(...result.items);
     }

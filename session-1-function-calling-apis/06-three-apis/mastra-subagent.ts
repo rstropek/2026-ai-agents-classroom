@@ -43,6 +43,7 @@ response.steps.forEach((step, index) => {
   console.log(`Step ${index + 1}: finishReason = ${step.finishReason}`);
   for (const { payload } of step.toolResults) {
     // The supervisor's model gets only this text, not the subagent's tool calls.
+    // Breakpoint 6.7: everything the supervisor got back from the subagent.
     const { text } = payload.result as { text: string };
     console.log(`  ${payload.toolName}(${JSON.stringify(payload.args)}) -> ${text}`);
   }

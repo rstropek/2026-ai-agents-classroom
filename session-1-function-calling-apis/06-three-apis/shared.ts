@@ -8,6 +8,7 @@ export const QUESTION = "Is it warmer in Linz or in Graz right now?";
 export const MAX_STEPS = 5;
 
 export function getWeather(city: string) {
+  // Breakpoint 6.1: compare the Call Stack in openai.ts and mastra.ts.
   // startsWith, because a model may write "Graz, Austria".
   return city.startsWith("Graz")
     ? { city, temperature: 11, condition: "sun" }

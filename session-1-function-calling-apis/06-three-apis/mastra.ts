@@ -23,6 +23,7 @@ const agent = new Agent({
 // The loop from the other two files runs inside this call.
 const response = await agent.generate(QUESTION, { maxSteps: MAX_STEPS });
 
+// Breakpoint 6.6: response.steps, the loop Mastra ran for you.
 response.steps.forEach((step, index) => {
   console.log(`Step ${index + 1}: finishReason = ${step.finishReason}`);
   for (const { payload } of step.toolResults) {

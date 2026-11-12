@@ -14,13 +14,40 @@
             "cwd": "${fileDirname}",
             // Let Node load .env itself. VS Code's "envFile" would put every
             // secret into the command line it types into the terminal.
+            // "if-exists", so samples that need no key also run without .env.
             "runtimeArgs": [
-                "--env-file=${workspaceFolder}/.env"
+                "--env-file-if-exists=${workspaceFolder}/.env"
             ],
             "console": "integratedTerminal",
             "skipFiles": [
                 "<node_internals>/**"
             ]
+        },
+        {
+            // Same as above, but asks for one command-line argument first,
+            // for example `qwen` in step 5 or `programmatic` in step 8.
+            "name": "Debug current sample file with argument",
+            "type": "node",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "${input:sampleArgument}"
+            ],
+            "cwd": "${fileDirname}",
+            "runtimeArgs": [
+                "--env-file-if-exists=${workspaceFolder}/.env"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "sampleArgument",
+            "type": "promptString",
+            "description": "Argument for the sample, for example qwen, programmatic, or a sentence for the form"
         }
     ]
 }
