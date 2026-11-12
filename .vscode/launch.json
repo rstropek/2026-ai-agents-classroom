@@ -5,17 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Fundamentals: 01 SDK",
+            // Debugs whichever sample .ts file is open in the editor.
+            // Node 24 runs TypeScript directly (type stripping), so no build step is needed.
+            "name": "Debug current sample file",
+            "type": "node",
             "request": "launch",
+            "program": "${file}",
+            "cwd": "${fileDirname}",
+            // Let Node load .env itself. VS Code's "envFile" would put every
+            // secret into the command line it types into the terminal.
             "runtimeArgs": [
-                "01:sdk"
+                "--env-file=${workspaceFolder}/.env"
             ],
-            "runtimeExecutable": "npm",
+            "console": "integratedTerminal",
             "skipFiles": [
                 "<node_internals>/**"
-            ],
-            "type": "node"
+            ]
         }
-        
     ]
 }
