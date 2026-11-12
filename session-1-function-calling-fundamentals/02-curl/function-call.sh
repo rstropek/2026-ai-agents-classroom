@@ -1,90 +1,112 @@
-#!/usr/bin/env bash
-# One complete function-calling round trip, with every request and response printed.
-set -euo pipefail
+# One complete function-calling round trip with two plain HTTP requests.
+#
+# Run the commands from the session-1-function-calling-fundamentals folder,
+# either one at a time in a terminal or all at once with npm run 02:curl.
+# -s hides curl's progress bar, and -o saves the response body to a file.
+# jq pretty-prints that file and reads single values from it.
+#
+# OpenAI instead of OpenRouter: in both commands, use the URL
+# https://api.openai.com/v1/chat/completions, the model gpt-5.4-mini,
+# and $OPENAI_API_KEY as the key.
 
-cd "$(dirname "$0")"
-set -a
-source ../../.env
-set +a
 
-# OpenRouter
-URL=https://openrouter.ai/api/v1/chat/completions
-MODEL=openai/gpt-oss-20b
-API_KEY=$OPENROUTER_API_KEY
+# Read OPENROUTER_API_KEY from the .env file in the repository root.
 
-# OpenAI: comment out the three lines above and uncomment these three.
-# URL=https://api.openai.com/v1/chat/completions
-# MODEL=gpt-5.4-mini
-# API_KEY=$OPENAI_API_KEY
+source ../.env
 
-TOOLS=$(cat <<'JSON'
-[
-  {
-    "type": "function",
-    "function": {
-      "name": "get_weather",
-      "description": "Get the current weather for a city.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "city": { "type": "string", "description": "City name" }
-        },
-        "required": ["city"]
+
+# Turn 1: the question and the tool definition.
+# The model answers with a tool call instead of text.
+
+curl -s https://openrouter.ai/api/v1/chat/completions \
+  -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -o 02-curl/turn-1.json \
+  -d '{
+    "model": "openai/gpt-oss-20b",
+    "messages": [
+      { "role": "system", "content": "Answer in one friendly sentence." },
+      { "role": "user", "content": "What is the weather in Linz?" }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get the current weather for a city.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "city": { "type": "string", "description": "City name" }
+            },
+            "required": ["city"]
+          }
+        }
+      }
+    ]
+  }'
+
+jq . 02-curl/turn-1.json
+
+
+# Read the id of the tool call from the turn 1 response.
+
+TOOL_CALL_ID=$(jq -r '.choices[0].message.tool_calls[0].id' 02-curl/turn-1.json)
+
+echo $TOOL_CALL_ID
+
+
+# Turn 2: the full history again, plus the assistant's tool call and our tool result.
+# The server remembers nothing from turn 1, so we send every message once more.
+# tool_call_id links our result to the tool call the model asked for.
+#
+# This body comes after <<EOF instead of in single quotes, so the shell
+# fills in $TOOL_CALL_ID. -d @- tells curl to read the body from there.
+
+curl -s https://openrouter.ai/api/v1/chat/completions \
+  -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -o 02-curl/turn-2.json \
+  -d @- <<EOF
+{
+  "model": "openai/gpt-oss-20b",
+  "messages": [
+    { "role": "system", "content": "Answer in one friendly sentence." },
+    { "role": "user", "content": "What is the weather in Linz?" },
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "$TOOL_CALL_ID",
+          "type": "function",
+          "function": { "name": "get_weather", "arguments": "{\"city\":\"Linz\"}" }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "$TOOL_CALL_ID",
+      "content": "{\"city\":\"Linz\",\"temperature\":7,\"condition\":\"fog\"}"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "Get the current weather for a city.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": { "type": "string", "description": "City name" }
+          },
+          "required": ["city"]
+        }
       }
     }
-  }
-]
-JSON
-)
-
-MESSAGES='[
-  { "role": "system", "content": "Answer in one friendly sentence." },
-  { "role": "user", "content": "What is the weather in Linz?" }
-]'
-
-send() {
-  local request
-  request=$(jq -n --arg model "$MODEL" --argjson tools "$TOOLS" --argjson messages "$1" \
-    '{ model: $model, messages: $messages, tools: $tools }')
-
-  # Status output goes to stderr, because stdout carries the response for the caller.
-  echo ">>> Request body" >&2
-  jq . <<<"$request" >&2
-
-  curl -sS "$URL" \
-    -H "Authorization: Bearer $API_KEY" \
-    -H "Content-Type: application/json" \
-    -d "$request"
+  ]
 }
+EOF
 
-echo "===== Turn 1: question and tool definition ====="
-RESPONSE=$(send "$MESSAGES")
-echo "<<< Response body"
-jq . <<<"$RESPONSE"
-
-ASSISTANT=$(jq '.choices[0].message' <<<"$RESPONSE")
-TOOL_CALL_ID=$(jq -r '.tool_calls[0].id // empty' <<<"$ASSISTANT")
-if [[ -z "$TOOL_CALL_ID" ]]; then
-  echo "The model answered without a tool call. Run the script again." >&2
-  exit 1
-fi
-
-echo
-echo "The model only asked for a call. This script is the one that runs the tool:"
-jq -r '.tool_calls[0].function | "\(.name)(\(.arguments))"' <<<"$ASSISTANT"
-
-# A real tool would use the arguments. This one always reports fog.
-RESULT='{"city":"Linz","temperature":7,"condition":"fog"}'
-
-MESSAGES=$(jq -n --argjson first "$MESSAGES" --argjson assistant "$ASSISTANT" \
-  --arg id "$TOOL_CALL_ID" --arg result "$RESULT" \
-  '$first + [$assistant, { role: "tool", tool_call_id: $id, content: $result }]')
-
-echo
-echo "===== Turn 2: full history plus tool result ====="
-RESPONSE=$(send "$MESSAGES")
-echo "<<< Response body"
-jq . <<<"$RESPONSE"
-
-echo
-echo "Final answer: $(jq -r '.choices[0].message.content' <<<"$RESPONSE")"
+jq . 02-curl/turn-2.json

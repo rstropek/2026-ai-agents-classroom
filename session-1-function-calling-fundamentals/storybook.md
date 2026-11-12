@@ -49,7 +49,7 @@ npm install
 
 A full run of all five steps costs well below one cent on OpenRouter.
 
-**Participants.** The announcement asks participants for an OpenAI key or Azure Foundry access. Steps 1 and 2 only use the standard Chat Completions API. Both files contain a commented-out OpenAI block with `gpt-5.4-mini` and `OPENAI_API_KEY`, tested against the OpenAI API. Participants swap it for the OpenRouter block. Step 4 needs no key at all. Steps 3 and 5 depend on OpenRouter, so participants without an OpenRouter key watch them on your screen.
+**Participants.** The announcement asks participants for an OpenAI key or Azure Foundry access. Steps 1 and 2 only use the standard Chat Completions API. Step 1 contains a commented-out OpenAI block with `gpt-5.4-mini` and `OPENAI_API_KEY`, which participants swap for the OpenRouter block. The step 2 file explains in its header comment which URL, model, and key to change for OpenAI. Both are tested against the OpenAI API. Step 4 needs no key at all. Steps 3 and 5 depend on OpenRouter, so participants without an OpenRouter key watch them on your screen.
 
 ## Step 1: the developer's view
 
@@ -89,15 +89,17 @@ Final answer: In Linz the current weather is a cool 7 °C with fog.
 
 **Prompt.**
 
-> Write a bash script that does the same function-calling round trip with curl and jq against OpenRouter's chat completions endpoint. Print every request and response body. Read the key from the .env file in the repository root.
+> Write the same function-calling round trip as two plain curl commands against OpenRouter's chat completions endpoint, with the full JSON body written out in each command. No bash functions or scripting beyond the bare minimum. Save each response with curl -o and pretty-print it with jq. Read the tool call id from the turn 1 response with jq into a variable and use it in the turn 2 body. Read the key with `source ../.env`.
 
 **Run.**
+
+Open `02-curl/function-call.sh` next to the terminal. The file is two `curl` commands with the JSON bodies written out, so participants read the request bodies directly. Around them are only a `source` line for the key, a `jq` call per response, and one `jq` line that copies the tool call id from turn 1 into the variable `TOOL_CALL_ID`. In a terminal in this folder, paste the commands one at a time. The responses land in `02-curl/turn-1.json` and `02-curl/turn-2.json`, which git ignores. Alternatively, run all of them in one go:
 
 ```bash
 npm run 02:curl
 ```
 
-The script prints each request body and each response body, so scroll through the output with participants. Keep the fields below on the screen for a moment.
+Turn 1 answers with a tool call. Keep the fields below on the screen for a moment.
 
 ```json
 "finish_reason": "tool_calls",
@@ -119,14 +121,17 @@ The script prints each request body and each response body, so scroll through th
 
 - `finish_reason` is `tool_calls`, and `content` is `null`. That pair tells your agent loop to keep going.
 - `tool_call_id` in turn 2 links the result to the request. It matters as soon as a model asks for several calls at once.
+- Turn 2 is written by hand except for the id. The server keeps no state between the two requests, so the history is whatever the client sends.
+- The turn 2 body follows `<<EOF` instead of sitting in single quotes, because the shell has to fill in `$TOOL_CALL_ID`. Point that out once and move on, since it's shell syntax, not HTTP.
 - The response also carries a `reasoning` field, where the model explains to itself why it wants the tool. Step 5 shows where that text comes from.
-- Don't add `-v` to the `curl` call during the live demo, because it prints the `Authorization` header on the projector.
+- Don't add `-v` to the `curl` commands during the live demo, because it prints the `Authorization` header on the projector.
 
 **Verify.**
 
 - [ ] Turn 1 ends with `finish_reason` set to `tool_calls`.
+- [ ] `echo $TOOL_CALL_ID` prints the same id as `tool_calls[0].id` in the turn 1 response.
 - [ ] The turn 2 request contains the assistant message and the `tool` message.
-- [ ] The script ends with a `Final answer:` line.
+- [ ] Turn 2 ends with `finish_reason` set to `stop`, and its `content` mentions 7 degrees and fog.
 
 ## Step 3: OpenAI and Anthropic side by side
 
