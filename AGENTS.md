@@ -14,16 +14,20 @@ The repository is new, so this structure is the intent rather than what exists t
 
 Concepts to reuse:
 
-- `storybook.md`: the walkthrough for one part of a session and its source of truth, in plain Markdown. Step numbers keep counting across sessions.
+- `storybook.md`: the guide for one part of a session and its source of truth, in plain Markdown. Step numbers keep counting across sessions.
 - `images/`: svgbob diagram sources (`.bob`) with their rendered SVGs.
 - `_quarto.yml` and `_style/`: PDF rendering of the storybooks into `_output/`, which keeps styling out of the Markdown.
 - `.claude/skills/`: project skills for authoring the material, such as `svgbob` and `writing-guide`.
 
-## Storybooks are walkthroughs
+## Storybooks
 
-Participants get the finished sample code. Nobody recreates it with a coding agent during the session. Instead, the class runs each sample, reads it, discusses it, and stops it in the debugger. Participants read the storybooks too, so they address the reader as "you" and contain no trainer-only stage directions.
+Participants read the storybooks too, so they address the reader as "you" and contain no trainer-only stage directions. Session 1 storybooks are walkthroughs of finished code. From session 2 on, storybooks are prompts: the class generates the code live with a coding agent.
 
-Each step in a storybook has these parts:
+### Session 1: walkthroughs
+
+Participants get the finished sample code. Nobody recreates it with a coding agent during the session. Instead, the class runs each sample, reads it, discusses it, and stops it in the debugger.
+
+Each step in a walkthrough has these parts:
 
 - **Goal**: what the step shows.
 - **Run**: the npm command and its expected output.
@@ -37,6 +41,17 @@ Breakpoints are anchored by marker comments in the sample code, never by line nu
 `.vscode/launch.json` has two configurations, **Debug current sample file** and **Debug current sample file with argument**. Both load `.env` from the repository root if it exists.
 
 Code that a debugger can't stop in, such as a shell script with `curl`, gets a walkthrough without breakpoints. Don't use the Debug Console from inside a nested function to reach module-level variables that function doesn't reference, because V8 may not expose them there. Place such experiments at a top-level breakpoint.
+
+### From session 2: prompts
+
+The class builds the code during the session by prompting a coding agent, starting with an MCP server for an existing app. Write down the prompts that actually worked while building the reference solution, not afterwards from memory.
+
+Each step in a prompt storybook has these parts:
+
+- **Goal**: what the step builds and which concept it teaches.
+- **Prompt**: the prompt to paste into the coding agent, verbatim, in a code block.
+- **Verify**: a checklist of what a working result shows, such as a passing test or a tool call in MCPJam.
+- **Catch up**: the folder under `steps/` with the finished state of the step, for anyone whose agent went off track.
 
 ## Differences from the previous classroom
 

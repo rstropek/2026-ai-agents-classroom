@@ -1,0 +1,208 @@
+import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { FLAT_KEYS } from '../src/chord-engine.ts';
+import { type RunningServer, startServer } from '../src/server.ts';
+
+interface Cell {
+  key: string;
+  concertKey: string;
+  bars: string[][];
+  text: string;
+}
+
+interface Sheet {
+  exercise: string | null;
+  progression: string;
+  keyOrder: string;
+  transposition: string;
+  seed: number;
+  rows: { cells: Cell[] }[];
+  warnings: { code: string; message: string }[];
+}
+
+function textOf(result: { content?: unknown }): string {
+  const [first] = result.content as { type: string; text: string }[];
+  if (first?.type !== 'text') {
+    throw new Error(`Expected a text block first, got ${JSON.stringify(result.content)}`);
+  }
+  return first.text;
+}
+
+describe('MCP server over HTTP', () => {
+  let server: RunningServer;
+  let client: Client;
+
+  beforeAll(async () => {
+    server = await startServer(0); // port 0: the OS picks a free port
+    client = await connect('auto');
+  });
+
+  afterAll(async () => {
+    await client.close();
+    await server.close();
+  });
+
+  async function connect(mode: 'auto' | 'legacy'): Promise<Client> {
+    const c = new Client({ name: 'test-client', version: '1.0.0' }, { versionNegotiation: { mode } });
+    await c.connect(new StreamableHTTPClientTransport(server.url));
+    return c;
+  }
+
+  it('lists the three tools, each with an output schema', async () => {
+    expect(client.getProtocolEra()).toBe('modern');
+    const { tools } = await client.listTools();
+    expect(tools.map((tool) => tool.name).sort()).toEqual([
+      'check_progression',
+      'generate_exercise_sheet',
+      'list_exercises',
+    ]);
+    for (const tool of tools) {
+      expect(tool.description).toBeTruthy();
+      expect(tool.outputSchema?.type).toBe('object');
+    }
+  });
+
+  describe('list_exercises', () => {
+    it('lists the predefined exercises and the progression syntax', async () => {
+      const result = await client.callTool({ name: 'list_exercises', arguments: {} });
+      expect(result.isError).toBeFalsy();
+      const { exercises, syntax } = result.structuredContent as {
+        exercises: { name: string; progression: string; inC: string }[];
+        syntax: string;
+      };
+      expect(exercises).toContainEqual({
+        name: 'ii7 - V7 - Imaj7 (two bars)',
+        progression: 'iim*7* - V*7* | I*maj7*',
+        inC: 'Dm7 – G7 | Cmaj7',
+      });
+      expect(exercises.map((exercise) => exercise.name)).not.toContain('Custom');
+      expect(syntax).toContain('*7*');
+      expect(textOf(result)).toContain('ii7 - V7 - Imaj7 (two bars): iim*7* - V*7* | I*maj7* → Dm7 – G7 | Cmaj7');
+    });
+  });
+
+  describe('generate_exercise_sheet', () => {
+    it('generates balanced rows for a Bb instrument', async () => {
+      const result = await client.callTool({
+        name: 'generate_exercise_sheet',
+        arguments: { exercise: 'ii7 - V7 - Imaj7 (two bars)', rows: 4, transposition: 'Bb', seed: 5 },
+      });
+      expect(result.isError).toBeFalsy();
+      const sheet = result.structuredContent as unknown as Sheet;
+      expect(sheet.seed).toBe(5);
+      expect(sheet.keyOrder).toBe('balanced');
+      expect(sheet.rows).toHaveLength(4);
+      for (const row of sheet.rows) {
+        expect(row.cells.map((cell) => cell.concertKey).sort()).toEqual([...FLAT_KEYS].sort());
+      }
+      const cWritten = sheet.rows[0]?.cells.find((cell) => cell.concertKey === 'C');
+      expect(cWritten).toMatchObject({ key: 'D', text: 'Em7 – A7 | Dmaj7', bars: [['Em7', 'A7'], ['Dmaj7']] });
+      expect(textOf(result)).toContain('D [C]:');
+      expect(textOf(result)).toContain('Em7 – A7 | Dmaj7');
+    });
+
+    it('gives the same sheet for the same seed', async () => {
+      const args = { exercise: 'Maj 7 / Min 7 / Dom 7', keyOrder: 'random', seed: 99 };
+      const a = await client.callTool({ name: 'generate_exercise_sheet', arguments: args });
+      const b = await client.callTool({ name: 'generate_exercise_sheet', arguments: args });
+      expect(b.structuredContent).toEqual(a.structuredContent);
+      const withoutSeed = await client.callTool({
+        name: 'generate_exercise_sheet',
+        arguments: { exercise: 'Major 7' },
+      });
+      expect(typeof (withoutSeed.structuredContent as unknown as Sheet).seed).toBe('number');
+    });
+
+    it('takes a custom progression, chosen keys and ratings', async () => {
+      const custom = await client.callTool({
+        name: 'generate_exercise_sheet',
+        arguments: { progression: 'iim7 - V*7*', keys: ['C', 'F'], rows: 3, seed: 1 },
+      });
+      const sheet = custom.structuredContent as unknown as Sheet;
+      expect(sheet.exercise).toBeNull();
+      expect(sheet.rows.map((row) => row.cells.length)).toEqual([2, 2, 2]);
+      expect(sheet.warnings.map((w) => w.code)).toEqual(['type-outside-asterisks']);
+      expect(textOf(custom)).toContain('Write iim*7*');
+
+      const rated = await client.callTool({
+        name: 'generate_exercise_sheet',
+        arguments: { exercise: 'Dominant 7', keyOrder: 'weighted-cycle', keyRatings: { C: 5, Gb: 1 }, rows: 2 },
+      });
+      expect(rated.isError).toBeFalsy();
+      expect((rated.structuredContent as unknown as Sheet).rows[0]?.cells).toHaveLength(12);
+    });
+
+    it('explains wrong combinations of options', async () => {
+      const call = (args: Record<string, unknown>) =>
+        client.callTool({ name: 'generate_exercise_sheet', arguments: args });
+
+      const neither = await call({ rows: 2 });
+      expect(neither.isError).toBe(true);
+      expect(textOf(neither)).toContain('exactly one of "exercise"');
+
+      const both = await call({ exercise: 'Major 7', progression: 'I*7*' });
+      expect(both.isError).toBe(true);
+
+      const keysWithCycle = await call({ exercise: 'Major 7', keyOrder: 'fourths-up', keys: ['C', 'F'] });
+      expect(textOf(keysWithCycle)).toContain('"keys" only works with keyOrder "balanced"');
+
+      const ratingsWithBalanced = await call({ exercise: 'Major 7', keyRatings: { C: 3 } });
+      expect(textOf(ratingsWithBalanced)).toContain(
+        '"keyRatings" only work with keyOrder "random" or "weighted-cycle"',
+      );
+
+      const unknownExercise = await call({ exercise: 'Blues' });
+      expect(unknownExercise.isError).toBe(true);
+      expect(textOf(unknownExercise)).toContain('ii7 - V7 - Imaj7 (two bars)');
+    });
+  });
+
+  describe('check_progression', () => {
+    it('shows the chords in the key and warns about mistakes', async () => {
+      const result = await client.callTool({
+        name: 'check_progression',
+        arguments: { progression: 'iim7 - V*7* | I*maj7*', key: 'F' },
+      });
+      expect(result.isError).toBeFalsy();
+      const check = result.structuredContent as {
+        key: string;
+        alternatives: { bars: { text: string }[] }[];
+        warnings: { code: string }[];
+      };
+      expect(check.key).toBe('F');
+      expect(check.alternatives[0]?.bars.map((bar) => bar.text)).toEqual(['Gm7 – C7', 'Fmaj7']);
+      expect(check.warnings.map((w) => w.code)).toEqual(['type-outside-asterisks']);
+      expect(textOf(result)).toContain('Bar 1: Gm7 – C7');
+      expect(textOf(result)).toContain('Write iim*7*');
+    });
+
+    it('defaults to C and reports no problems for a correct progression', async () => {
+      const result = await client.callTool({ name: 'check_progression', arguments: { progression: 'I*maj7*' } });
+      expect((result.structuredContent as { key: string }).key).toBe('C');
+      expect(textOf(result)).toContain('No problems found.');
+    });
+  });
+
+  it('serves clients using the 2025 initialize handshake', async () => {
+    const legacy = await connect('legacy');
+    try {
+      expect(legacy.getProtocolEra()).toBe('legacy');
+      const result = await legacy.callTool({
+        name: 'generate_exercise_sheet',
+        arguments: { exercise: 'Major 7', rows: 1, seed: 3 },
+      });
+      expect((result.structuredContent as unknown as Sheet).rows[0]?.cells).toHaveLength(12);
+    } finally {
+      await legacy.close();
+    }
+  });
+
+  it('rejects requests from non-localhost origins', async () => {
+    const response = await fetch(server.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example.com' },
+      body: '{}',
+    });
+    expect(response.status).toBe(403);
+  });
+});
