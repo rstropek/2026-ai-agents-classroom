@@ -17,7 +17,7 @@ The prompt is written like the ones in session 2: what you want, the constraints
 
 ## Prerequisites
 
-You need the result of session 2: your fork with `mcp-server/` and `AGENTS.md` after step 13. If you don't have it, copy `mcp-server/` and `AGENTS.md` from `../session-2-mcp-server/steps/13-mcp-app/` into the root of your fork, then run `npm install` and `npm run build` in `mcp-server/`.
+You need the result of session 2: your fork with `mcp-server/` and `AGENTS.md` after step 13, with or without the optional notes. If you don't have it, copy `mcp-server/` and `AGENTS.md` from `../session-2-mcp-server/steps/13-mcp-app/` into the root of your fork, then run `npm install` and `npm run build` in `mcp-server/`.
 
 You check the server with the [MCPJam](https://www.mcpjam.com) command line interface and Inspector, as in session 2. This time they connect to a URL instead of starting your server.
 

@@ -170,6 +170,41 @@ npx -y @mcpjam/cli@latest apps conformance --command node --args src/main.ts
 - [ ] In the MCPJam Inspector, click **Add Server** under **Connect**, set **Connection Type** to **STDIO**, and enter `node` followed by the absolute path of your `mcp-server/src/main.ts` as the command. The first time, the Inspector asks whether it may run that command on your machine; allow it. Open the **Playground** and pick `open_trainer` in its tool list. Clear **skip** next to `exercise`, choose an exercise, and click **Run**. You don't need a model or an account for that. The trainer appears, Start counts in 4-3-2-1 and shows the chords, and the next bar moves up every four beats.
 - [ ] The trainer switches between light and dark when you switch the theme with the moon icon above the chat. Set the Inspector itself to **Light** first, under **Settings > Appearance**. The Inspector sometimes hands dark colors to a light preview: the trainer then looks half dark, although it follows the host correctly. If that happens, click **Reset** under **Client Context** and run the tool again.
 - [ ] After Stop, the trainer says that it told the chat which keys you practiced.
+- [ ] Above the trainer, **Sandbox** may report blocked `eval` requests. That is zod, which the SDK uses: it tests once whether `eval` is allowed and works without it.
 - [ ] `AGENTS.md` now covers the UI: how to build it, why the server must work without the bundle, and the limits a host puts on an app.
 
 **Catch up.** Copy `mcp-server/` and `AGENTS.md` from `steps/13-mcp-app/` into the root of your fork, replacing yours, then run `npm install` and `npm run build` in `mcp-server/`.
+
+## Optional: notes in the trainer
+
+**Goal.** Show the chord tones of the current bar as notes on a staff, for players who know their instrument better than music theory. The step adds something the app can't do yet: a converter from chord symbols to notes. It runs on the server as a tool that only the trainer may call. The model never sees that tool or its results, so the notes cost no tokens, and the conversion is code with tests instead of something the model works out anew every time. Do this step if there is time left; session 3 works with or without it.
+
+**Prompt.**
+
+```text
+One more thing for the trainer: below the chord symbols of the current bar, show the chord tones as notes on a staff, so that players who aren't fluent in music theory see what to play. Root position on a treble staff is fine. For Bb, Eb and F instruments the notes are written for the instrument, like the chord symbols.
+
+The conversion from chord symbol to notes belongs on the server, not in the UI; the practice sheet or the Angular app may want it later. Offer it as a tool that only the trainer can call. The model doesn't need it, and the notes would only cost tokens in its context. The trainer draws the staff in the browser from ABC notation. I looked at tonal for the chord tones and abcjs for drawing; check their current docs, and check the spelling of the notes, because no library gets every chord right. A chord the converter doesn't understand simply gets no notes.
+
+The trainer moves on every four beats and must not wait for the server, so fetch what it needs up front instead of asking for every bar. The same rules as before apply to the bundle and the theme: no external requests, and the staff follows the host's light or dark theme.
+
+Read how ext-apps handles tools that only an app may call before you write code. Update AGENTS.md with what this step taught us that the code doesn't tell, and shorten or drop what no longer earns its place, so that it stays on one page.
+
+You're done when tests, lint and type check pass, the build creates the bundle, the doctor still reports the server as ready, apps conformance still passes, and the new tool is marked as callable by the app only.
+```
+
+**Verify.**
+
+- [ ] `npm test`, `npm run lint`, and `npm run typecheck` pass, and `npm run build` writes one HTML file.
+- [ ] `apps conformance` from step 13 still passes.
+- [ ] `tools list` shows the new tool with `"visibility":["app"]` in its `_meta`. Hosts read that and don't offer the tool to the model:
+
+```bash
+npx -y @mcpjam/cli@latest tools list --command node --args src/main.ts
+```
+
+- [ ] In the MCPJam Inspector, the tool list of the **Playground** shows the new tool with visibility `app`. Run `open_trainer` as in step 13 with the exercise `ii7 - V7 - Imaj7 (two bars)` and the transposition for Bb. Below the trainer, the Inspector lists one call of the new tool: the trainer made it, not the model. After Start you see a staff below the chords, and its notes match them: `Em7` shows E, G, B, and D.
+- [ ] The staff is readable in the light and the dark theme.
+- [ ] `AGENTS.md` names the decision to convert on the server and why the tool is hidden from the model.
+
+**Catch up.** Copy `mcp-server/` and `AGENTS.md` from `steps/13-optional-notes/` into the root of your fork, replacing yours, then run `npm install` and `npm run build` in `mcp-server/`.
