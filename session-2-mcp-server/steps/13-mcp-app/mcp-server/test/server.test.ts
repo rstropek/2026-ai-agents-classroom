@@ -1,10 +1,9 @@
-import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
+import { fileURLToPath } from 'node:url';
+import { Client } from '@modelcontextprotocol/client';
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FLAT_KEYS } from '../src/chord-engine.ts';
-import { type RunningServer, startServer } from '../src/server.ts';
 import { TRAINER_URI } from '../src/trainer-app.ts';
-
-const TRAINER_HTML = '<!doctype html><html><body><div id="root"></div></body></html>';
 
 interface Cell {
   key: string;
@@ -31,29 +30,31 @@ function textOf(result: { content?: unknown }): string {
   return first.text;
 }
 
-describe('MCP server over HTTP', () => {
-  let server: RunningServer;
+describe('MCP server over stdio', () => {
   let client: Client;
 
   beforeAll(async () => {
-    // Port 0: the OS picks a free port. The tests serve stand-in HTML, so they need no `npm run build`
-    server = await startServer(0, '127.0.0.1', async () => TRAINER_HTML);
-    client = await connect('auto');
+    // The client picks the 2025 handshake unless told otherwise, so pin it to 2026-07-28.
+    client = new Client(
+      { name: 'test-client', version: '1.0.0' },
+      { versionNegotiation: { mode: { pin: '2026-07-28' } } },
+    );
+    // Starts the server as a child process, exactly like a host does.
+    await client.connect(
+      new StdioClientTransport({
+        command: process.execPath,
+        args: ['src/main.ts'],
+        cwd: fileURLToPath(new URL('..', import.meta.url)),
+      }),
+    );
   });
 
   afterAll(async () => {
     await client.close();
-    await server.close();
   });
 
-  async function connect(mode: 'auto' | 'legacy'): Promise<Client> {
-    const c = new Client({ name: 'test-client', version: '1.0.0' }, { versionNegotiation: { mode } });
-    await c.connect(new StreamableHTTPClientTransport(server.url));
-    return c;
-  }
-
   it('lists the four tools, each with an output schema', async () => {
-    expect(client.getProtocolEra()).toBe('modern');
+    expect(client.getNegotiatedProtocolVersion()).toBe('2026-07-28');
     const { tools } = await client.listTools();
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'check_progression',
@@ -207,7 +208,7 @@ describe('MCP server over HTTP', () => {
       expect(contents[0]).toMatchObject({
         uri: TRAINER_URI,
         mimeType: 'text/html;profile=mcp-app',
-        text: TRAINER_HTML,
+        text: expect.stringContaining('<html'),
       });
     });
 
@@ -264,28 +265,5 @@ describe('MCP server over HTTP', () => {
       const result = await client.callTool({ name: 'open_trainer', arguments: { exercise: 'Major 7', tempo: 500 } });
       expect(result.isError).toBe(true);
     });
-  });
-
-  it('serves clients using the 2025 initialize handshake', async () => {
-    const legacy = await connect('legacy');
-    try {
-      expect(legacy.getProtocolEra()).toBe('legacy');
-      const result = await legacy.callTool({
-        name: 'generate_exercise_sheet',
-        arguments: { exercise: 'Major 7', rows: 1, seed: 3 },
-      });
-      expect((result.structuredContent as unknown as Sheet).rows[0]?.cells).toHaveLength(12);
-    } finally {
-      await legacy.close();
-    }
-  });
-
-  it('rejects requests from non-localhost origins', async () => {
-    const response = await fetch(server.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example.com' },
-      body: '{}',
-    });
-    expect(response.status).toBe(403);
   });
 });

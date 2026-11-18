@@ -23,16 +23,23 @@ export const TRAINER_URI = 'ui://practice-jazz-chords/trainer.html';
 /** The bundle that `npm run build` writes (vite + vite-plugin-singlefile, see ui/vite.config.ts). */
 export const TRAINER_HTML_PATH = new URL('../dist/trainer.html', import.meta.url);
 
-/** Reads the trainer's HTML; the tests pass their own. */
+/** Reads the trainer's HTML. */
 export type HtmlLoader = () => Promise<string>;
+
+/** Shown instead of the trainer until `npm run build` has written the bundle. */
+const NOT_BUILT_HTML = `<!doctype html>
+<html lang="en">
+  <body style="font-family: sans-serif">
+    <p>The chord trainer is not built yet. Run <code>npm run build</code> in mcp-server/ and open it again.</p>
+  </body>
+</html>
+`;
 
 export const readTrainerHtml: HtmlLoader = async () => {
   try {
     return await readFile(TRAINER_HTML_PATH, 'utf8');
-  } catch (error) {
-    throw new Error(`The chord trainer is not built yet (${TRAINER_HTML_PATH.pathname}). Run "npm run build".`, {
-      cause: error,
-    });
+  } catch {
+    return NOT_BUILT_HTML;
   }
 };
 

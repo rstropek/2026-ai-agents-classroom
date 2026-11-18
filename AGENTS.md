@@ -46,6 +46,10 @@ Code that a debugger can't stop in, such as a shell script with `curl`, gets a w
 
 The class builds the code during the session by prompting a coding agent, starting with an MCP server for an existing app. Write down the prompts that actually worked while building the reference solution, not afterwards from memory.
 
+Prompts are also examples of good prompting, so write them the way a developer briefs an experienced colleague: what to build, the constraints, and when it's done, in plain sentences. Leave out commands with their flags, file layouts, MIME types, package and plugin names, and API hints. Name a detail only where the agent's training data is likely outdated, such as the MCP SDK and protocol versions, and point to the current documentation (the `llms.txt` files) instead of explaining it. The exact commands belong in **Verify**, which the participants run themselves.
+
+In the demo app, the first prompt has the agent start an `AGENTS.md` in the root of the fork, with a sentence at its top on what belongs in it, and every later prompt asks to update it with what the step taught and to shorten or drop what no longer earns its place. Without that rule the file grows into a description of the code with every step. That file holds commands, decisions with their reasons, traps, and documentation links, but nothing a quick look at the code shows. Later prompts rely on it instead of repeating earlier details. Each catch-up folder therefore holds `AGENTS.md` next to `mcp-server/`.
+
 Each step in a prompt storybook has these parts:
 
 - **Goal**: what the step builds and which concept it teaches.

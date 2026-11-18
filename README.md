@@ -24,8 +24,8 @@ Step numbers keep counting across parts and sessions. Breakpoints are marked in 
 | Session | Date | Topic | Material |
 |---|---|---|---|
 | 1 | 2026-11-12 | Function tools | see below |
-| 2 | 2026-11-19 | MCP and skills, stdio transport | follows |
-| 3 | 2026-11-26 | MCP Streamable HTTP | follows |
+| 2 | 2026-11-19 | MCP and skills, stdio transport | [`session-2-mcp-server/`](session-2-mcp-server/), steps 11 to 13 |
+| 3 | 2026-11-26 | MCP Streamable HTTP | [`session-3-mcp-streamable-http/`](session-3-mcp-streamable-http/), step 14 |
 | 4 | 2026-12-03 | MCP servers in production: cloud deployment and OAuth2 | follows |
 | 5 | 2026-12-10 | Multi-agent systems with Mastra, AG-UI, A2UI, and A2A | follows |
 

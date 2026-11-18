@@ -8,13 +8,21 @@ In this part you add an MCP server to a real app: [Practice Jazz Chords](https:/
 
 The app keeps its chord logic in `src/app/chord-engine`, plain TypeScript without Angular. It parses progressions such as `iim*7* - V*7* | I*maj7*`, puts them into keys, and decides which key comes next. The Angular app uses the engine for its practice page, and your MCP server uses the same code for its tools. That is the typical situation in a real project: the business logic exists, and the MCP server is one more way to use it.
 
+The server uses the stdio transport. The host, such as a chat app or a coding agent, starts the server as a child process on your machine and exchanges MCP messages with it over stdin and stdout. There is no port, no URL, and no login: whoever can start the process can use it. In session 3 you make the same server available over Streamable HTTP.
+
 The three steps build on each other:
 
 1. Step 11 sets up the project and a hello world server, so that you know the setup works before the real tools come in.
 2. Step 12 adds tools that create practice sheets: rows of all twelve keys in random order, with the chords of an exercise in each key.
 3. Step 13 adds an MCP App, an interactive chord trainer that the host shows right in the chat.
 
-The MCP specification changed fundamentally with version 2026-07-28: no sessions, no initialize handshake, and a new way to discover servers. Your coding agent's training data most likely predates it. That's why every prompt tells the agent to read the current documentation first, starting at <https://modelcontextprotocol.io/llms.txt>. Keep that line when you write your own prompts.
+Your server speaks MCP 2026-07-28 only. That version changed the protocol fundamentally: there is no initialize handshake any more, and every request carries what the server needs to know. Your coding agent's training data most likely predates it. That's why the prompts tell the agent to read the current documentation first, starting at <https://modelcontextprotocol.io/llms.txt>. Keep that line when you write your own prompts.
+
+## How the prompts are written
+
+The prompts brief the agent the way you would brief an experienced colleague who doesn't know the project yet. They say what you want, which constraints apply, and when the step is done, and they leave the how to the agent. They name details only where the agent would otherwise go wrong, such as the SDK version and the protocol version, which are newer than its training data.
+
+In step 11 the agent also starts an `AGENTS.md` in the root of your fork. Coding agents read that file at the start of a session, so it is the project's memory: how to run and check the server, the decisions and why they were made, the traps, and links to the documentation. It deliberately leaves out what a quick look at the code shows anyway. That keeps it short and keeps it from going stale. Every later prompt asks the agent to keep the file current, and none of them has to repeat what an earlier step settled.
 
 ## Prerequisites
 
@@ -24,11 +32,13 @@ The MCP specification changed fundamentally with version 2026-07-28: no sessions
 
 Fork <https://github.com/karin112358/jazz-chord-flashcards> and clone your fork. Your work stays in your fork, so don't open pull requests to the original repository.
 
-You check your server with [MCPJam](https://www.mcpjam.com). The prompts use its command line interface, which needs no installation and no API key:
+You check your server with [MCPJam](https://www.mcpjam.com). Its command line interface needs no installation and no API key. Run it in `mcp-server/`, and it starts your server over stdio itself:
 
 ```bash
-npx -y @mcpjam/cli@latest --help
+npx -y @mcpjam/cli@latest server doctor --command node --args src/main.ts
 ```
+
+The commands in this storybook assume that the server starts with `src/main.ts`. If your agent picked another file name, such as `src/index.ts`, use that one; your `AGENTS.md` names it.
 
 For step 13 you also need the MCPJam Inspector, which shows MCP Apps the way a chat host does. It runs on your machine and needs no account for calling tools:
 
@@ -40,47 +50,49 @@ Open it at <http://127.0.0.1:6274>. Opened as `localhost`, it asks for the link 
 
 ## Step 11: a hello world MCP server
 
-**Goal.** Set up the MCP server project next to the app: TypeScript in strict mode, Biome, Vitest, and the MCP TypeScript SDK v2 serving Streamable HTTP. One `hello` tool proves that the setup works, from the test to a real MCP client.
+**Goal.** Set up the MCP server project next to the app: TypeScript in strict mode, Biome, Vitest, and the MCP TypeScript SDK v2 serving stdio. One `hello` tool proves that the setup works, from the test to a real MCP client. Notice that a stdio server must never write anything but MCP messages to stdout, and look at what your agent wrote into `AGENTS.md`.
 
 **Prompt.**
 
 ```text
-This repository is Practice Jazz Chords, an Angular app for practicing jazz chords in all keys. Its chord logic lives in src/app/chord-engine: plain TypeScript without Angular, described in its README.md.
+I'd like to add an MCP server to this app, so that AI assistants can use its chord logic. The logic lives in src/app/chord-engine, plain TypeScript without Angular; its README explains it. Leave the Angular app as it is.
 
-Add an MCP server in a new folder mcp-server/ with its own package.json. Leave the Angular app as it is.
+Let's start small: a server in its own folder mcp-server/ with a single hello tool that greets a name, so that we know the setup works before the real tools come in. It runs over stdio, which means that a host such as a chat app or a coding agent starts it as a child process.
 
-Setup:
-- Node.js 24 runs the TypeScript files directly (type stripping), no build step for the server
-- TypeScript in strict mode, type-checked with tsc --noEmit
-- Biome with its recommended rules for linting and formatting
-- Vitest for tests; Vite comes in later for a UI bundle
-- npm scripts: start, dev (restarts on changes), test, lint, typecheck
+What I have in mind:
+- TypeScript in strict mode, run directly by Node.js 24 without a build step
+- Biome for linting and formatting, Vitest for tests, and the npm scripts test, lint and typecheck
+- the MCP TypeScript SDK v2, not v1
+- MCP protocol 2026-07-28 only; clients that still speak a 2025 version are turned away
+- a test that talks to the server the way a real host does and makes sure that the connection really uses 2026-07-28
 
-Server:
-- The MCP TypeScript SDK v2 with zod 4: @modelcontextprotocol/server, @modelcontextprotocol/node for the HTTP server, and @modelcontextprotocol/client for the tests. Not the v1 package @modelcontextprotocol/sdk.
-- Streamable HTTP on http://127.0.0.1:3000/mcp, accepting requests from localhost only
-- MCP protocol 2026-07-28, which is stateless; clients that still use the 2025 handshake should work too
-- For now one tool, hello, that greets a name
+Your knowledge of MCP is probably outdated. Version 2026-07-28 changed the protocol fundamentally, and SDK v2 is new. Read the current documentation before you write code, starting at https://modelcontextprotocol.io/llms.txt and https://ts.sdk.modelcontextprotocol.io/v2/llms.txt.
 
-The MCP specification changed a lot with version 2026-07-28: there are no sessions and no initialize handshake any more. Before you write code, read https://modelcontextprotocol.io/llms.txt and the pages it points to that you need, and the SDK v2 documentation at https://ts.sdk.modelcontextprotocol.io/v2/llms.txt (the site's root still documents v1). Don't rely on what you remember about MCP.
+Also start an AGENTS.md in the root of the repository for whoever works on the server next, including you in a later session. It's not documentation of the code: write down only what a quick look at the code doesn't tell, such as how to run and check the server, the decisions we made and why, the traps you ran into, and links to the docs that matter. Keep it to one page, and say so at its top, so that it stays that way.
 
-Add a Vitest test that starts the server on a free port and calls the hello tool with the SDK's client over HTTP, once with protocol 2026-07-28 and once with the 2025 handshake. The test must check which protocol the client actually negotiated, because the client does not pick 2026-07-28 on its own.
-
-You're done when npm test, npm run lint and npm run typecheck pass, and npx -y @mcpjam/cli@latest server doctor --url http://127.0.0.1:3000/mcp reports "ready" while npm start runs.
+You're done when tests, lint and type check pass and the server doctor of the MCPJam CLI (@mcpjam/cli) reports the server as ready.
 ```
 
 **Verify.**
 
 - [ ] `mcp-server/package.json` depends on `@modelcontextprotocol/server`, not on `@modelcontextprotocol/sdk`.
 - [ ] `npm test`, `npm run lint`, and `npm run typecheck` pass in `mcp-server/`.
-- [ ] With `npm start` running, `server doctor` reports `ready` and protocol version `2026-07-28`.
-- [ ] This call greets you:
+- [ ] `server doctor`, run in `mcp-server/`, reports `ready` and protocol version `2026-07-28`:
 
 ```bash
-npx -y @mcpjam/cli@latest tools call --url http://127.0.0.1:3000/mcp --tool-name hello --tool-args '{"name":"Karin"}'
+npx -y @mcpjam/cli@latest server doctor --command node --args src/main.ts
 ```
 
-**Catch up.** Copy `steps/11-hello-mcp/mcp-server/` into the root of your fork and run `npm install` in it.
+- [ ] This call, run in `mcp-server/`, greets you:
+
+```bash
+npx -y @mcpjam/cli@latest tools call --command node --args src/main.ts --tool-name hello --tool-args '{"name":"Karin"}'
+```
+
+- [ ] Nothing in `src/` writes to stdout with `console.log`. Logging goes to stderr.
+- [ ] `AGENTS.md` in the root of your fork fits on one screen. It names the commands and explains what the code doesn't: why stdout is off limits, why the client must ask for 2026-07-28, and where the documentation is.
+
+**Catch up.** Copy `mcp-server/` and `AGENTS.md` from `steps/11-hello-mcp/` into the root of your fork, and run `npm install` in `mcp-server/`.
 
 ## Step 12: practice sheets as tools
 
@@ -89,79 +101,75 @@ npx -y @mcpjam/cli@latest tools call --url http://127.0.0.1:3000/mcp --tool-name
 **Prompt.**
 
 ```text
-Now turn the hello server into a practice sheet generator for jazz chords. Replace the hello tool.
+Now the real tools: turn the hello server into a practice sheet generator for jazz chords, and drop the hello tool.
 
 A practice sheet works like this: each row lists the keys to practice, by default all 12, each exactly once in random order. Each cell shows the chosen exercise in that key, for example Dm7 – G7 | Cmaj7 in C for a ii–V–I over two bars. A row never starts with the key the previous row ended on.
 
-Build on src/app/chord-engine. Import it from mcp-server (don't copy it), and only change it if the server really needs something it lacks; then add a test there too.
+Build on the chord engine; import it, don't copy it. Change the engine only if the server really needs something it lacks, and test that change there too.
 
-Tools:
-- list_exercises: the predefined exercises with their progressions, and the syntax for custom progressions
-- generate_exercise_sheet with these options:
-  - a predefined exercise by name, or a custom progression in the app's syntax
-  - number of rows
-  - key order: balanced rows as described above, or one of the app's key orders (random, weighted cycle, perfect fourths up or down) cut into rows of 12
-  - which keys to practice (balanced rows)
-  - ratings 1–5 for some or all keys, as in the app (random and weighted cycle); keys without a rating count as 1
-  - transposition for Bb, Eb and F instruments, which the app doesn't have: the chords are written for the instrument, while the keys to practice and the ratings stay at concert pitch
-  - a seed, so that the same seed gives the same sheet again
-- check_progression: shows how the app reads a custom progression in a given key and warns about common mistakes, such as a chord type outside the asterisks
+The tools I have in mind:
+- list_exercises: the predefined exercises, and how to write a custom progression
+- generate_exercise_sheet: the user picks a predefined exercise or writes their own progression, and chooses the number of rows, the key order (balanced rows as described above, or one of the app's key orders), which keys to practice, and ratings per key as in the app. On top of that it transposes for Bb, Eb and F instruments, which the app can't do: the chords are written for the instrument, while the keys and the ratings stay at concert pitch. A seed makes a sheet reproducible.
+- check_progression: shows how the app reads a custom progression in a given key, and warns about typical mistakes, such as a chord type outside the asterisks
 
-Each tool returns readable text for the model and structured content with an output schema. Describe the tools and their parameters so that a model picks the right options without guessing.
+A model calls these tools, so describe them and their parameters well enough that it never has to guess. Return readable text for the model and structured content for programs.
 
-Test the sheet logic with Vitest, and test each tool through the SDK client over HTTP. The SDK v2 documentation is at https://ts.sdk.modelcontextprotocol.io/v2/llms.txt; check there how tools declare output schemas and return structured content.
+Test the sheet logic, and test each tool the way a host talks to the server. Update AGENTS.md with what this step taught us that the code doesn't tell, and shorten or drop what no longer earns its place, so that it stays on one page.
 
-You're done when npm test, npm run lint and npm run typecheck pass, and with npm start running npx -y @mcpjam/cli@latest server doctor --url http://127.0.0.1:3000/mcp reports "ready" and this call succeeds:
-npx -y @mcpjam/cli@latest tools call --url http://127.0.0.1:3000/mcp --tool-name generate_exercise_sheet --tool-args '{"exercise":"ii7 - V7 - Imaj7 (two bars)","rows":4,"transposition":"Bb"}' --expect-success --validate-response
+You're done when tests, lint and type check pass, the doctor still reports the server as ready, and the MCPJam CLI can call generate_exercise_sheet for the exercise "ii7 - V7 - Imaj7 (two bars)" with four rows for a Bb instrument, with a response that passes its validation.
 ```
 
 **Verify.**
 
 - [ ] `npm test`, `npm run lint`, and `npm run typecheck` pass in `mcp-server/`, and the server imports the chord engine instead of copying it.
-- [ ] The `tools call` from the prompt prints four rows. Each row has twelve different keys, and the chords are written for a Bb instrument: the ii–V–I of concert C reads `Em7 – A7 | Dmaj7`.
-- [ ] `check_progression` with `viidim7 - V*7*` warns that `dim` stands outside the asterisks.
-- [ ] `protocol conformance` passes:
+- [ ] This call, run in `mcp-server/`, prints four rows. Each row has twelve different keys, and the chords are written for a Bb instrument: the ii–V–I of concert C reads `Em7 – A7 | Dmaj7`.
 
 ```bash
-npx -y @mcpjam/cli@latest protocol conformance --url http://127.0.0.1:3000/mcp
+npx -y @mcpjam/cli@latest tools call --command node --args src/main.ts --tool-name generate_exercise_sheet --tool-args '{"exercise":"ii7 - V7 - Imaj7 (two bars)","rows":4,"transposition":"Bb"}' --expect-success --validate-response
 ```
 
-**Catch up.** Copy `steps/12-chord-tools/mcp-server/` into the root of your fork, replacing your `mcp-server/`, and run `npm install` in it.
+- [ ] `check_progression` with `viidim7 - V*7*` warns that `dim` stands outside the asterisks:
+
+```bash
+npx -y @mcpjam/cli@latest tools call --command node --args src/main.ts --tool-name check_progression --tool-args '{"progression":"viidim7 - V*7*"}'
+```
+
+Your agent may have named the parameters differently. `tools list` with the same `--command` and `--args` shows its names.
+
+- [ ] `AGENTS.md` mentions what the step added that the code doesn't explain, such as the decision to import the engine and what the transposition means, without describing the tools one by one.
+
+**Catch up.** Copy `mcp-server/` and `AGENTS.md` from `steps/12-chord-tools/` into the root of your fork, replacing yours, and run `npm install` in `mcp-server/`.
 
 ## Step 13: the chord trainer as an MCP App
 
-**Goal.** Give the server a user interface. An MCP App is a small web page that a tool declares and the host renders inside the chat. The trainer shows a bar of chords at a time, like the app's practice page, and tells the model afterwards which keys were practiced.
+**Goal.** Give the server a user interface. An MCP App is a small web page that a tool declares and the host renders inside the chat. The trainer shows a bar of chords at a time, like the app's practice page, and tells the model afterwards which keys were practiced. The transport doesn't matter for that: the host fetches the page from your server over stdio like any other resource.
 
 **Prompt.**
 
 ```text
-Now add an MCP App: an interactive chord trainer that the host shows inline in the chat. It complements the Angular app and must not replace it.
+Next, the server gets a user interface: an MCP App with a chord trainer that the host shows right in the chat. It complements the Angular app and doesn't replace it.
 
-What the trainer does:
-- a tool open_trainer opens it, with the exercise options of generate_exercise_sheet (predefined exercise or custom progression, key order, key ratings, transposition) and a tempo; rows, seed and the choice of keys don't apply, because the trainer runs until the user stops
-- like the practice page of the Angular app (src/app/components/player), it shows the current bar large and the next bar small, and moves on every four beats at the tempo; a visual beat counter is enough, no sound
-- start, stop and tempo controls
-- the bars come from ChordSequence in src/app/chord-engine, running in the browser
-- when the user stops, the app tells the model which keys were practiced since the trainer was opened (update the model context)
+The trainer works like the app's practice page (src/app/components/player): it shows the current bar large and the next bar small, and moves on every four beats at the chosen tempo. A visual beat counter is enough, no sound. The user can start, stop, and change the tempo. A tool open_trainer opens it with the exercise options of the sheet generator plus a tempo; rows, seed, and the choice of keys don't apply, because the trainer runs until the user stops it. The bars come from the chord engine, running in the browser. When the user stops, the trainer lets the model know which keys were practiced since it was opened.
 
-Technology:
-- the MCP Apps extension (io.modelcontextprotocol/ui) with @modelcontextprotocol/ext-apps 2.x, the version for SDK v2
-- the UI in mcp-server/ui/ with React and Vite, bundled into one HTML file (vite-plugin-singlefile) that the server serves as a ui:// resource with MIME type text/html;profile=mcp-app
-- no external fonts, scripts or requests: the host's content security policy blocks them
-- follow the host's light or dark theme, not the operating system's, also in the built bundle
-- npm test works without a built bundle
+For the UI I'd like React, bundled into a single HTML file that the server hands to the host; npm run build creates it. Hosts block external fonts, scripts, and requests inside an app. The trainer follows the host's light or dark theme, not the operating system's. The tests must still run without a built bundle.
 
-MCP Apps is new and still changing. Before you write code, read https://modelcontextprotocol.io/extensions/apps/overview.md and https://modelcontextprotocol.io/extensions/apps/build.md, and the README and docs of https://github.com/modelcontextprotocol/ext-apps. The build guide still shows SDK v1 code; this server uses the MCP TypeScript SDK v2 (https://ts.sdk.modelcontextprotocol.io/v2/llms.txt), so take the API from the ext-apps 2.x documentation.
+MCP Apps is new and still changing, so read the docs before you write code: https://modelcontextprotocol.io/extensions/apps/overview.md, https://modelcontextprotocol.io/extensions/apps/build.md, and the README and docs of https://github.com/modelcontextprotocol/ext-apps. The build guide still shows code for SDK v1; we use SDK v2, so take the API from ext-apps 2.x. Update AGENTS.md with what this step taught us that the code doesn't tell, and shorten or drop what no longer earns its place, so that it stays on one page.
 
-You're done when npm test, npm run lint and npm run typecheck pass, npm run build creates the bundle, and with npm start running both npx -y @mcpjam/cli@latest server doctor --url http://127.0.0.1:3000/mcp reports "ready" and npx -y @mcpjam/cli@latest apps conformance --url http://127.0.0.1:3000/mcp passes.
+You're done when tests, lint and type check pass, the build creates the bundle, the doctor still reports the server as ready, and the apps conformance check of the MCPJam CLI passes.
 ```
 
 **Verify.**
 
 - [ ] `npm run build` writes one HTML file, and `npm test`, `npm run lint`, and `npm run typecheck` pass.
-- [ ] `apps conformance` passes.
-- [ ] In the MCPJam Inspector, add the server `http://127.0.0.1:3000/mcp` under **Connect**. Open the **Playground** and pick `open_trainer` in its tool list. Clear **skip** next to `exercise`, choose an exercise, and click **Run**. You don't need a model or an account for that. The trainer appears, Start counts in 4-3-2-1 and shows the chords, and the next bar moves up every four beats.
-- [ ] The trainer switches between light and dark when you switch the theme with the moon icon above the chat. Set the Inspector itself to **Light** first, under **Settings > Appearance**. A dark Inspector hands its dark colors to a light preview, and the trainer then looks half dark, although it follows the host correctly. If that happens with a light Inspector too, click **Reset** under **Client Context**.
-- [ ] After Stop, the trainer says that it told the chat which keys you practiced.
+- [ ] `apps conformance`, run in `mcp-server/`, passes:
 
-**Catch up.** Copy `steps/13-mcp-app/mcp-server/` into the root of your fork, replacing your `mcp-server/`, then run `npm install` and `npm run build` in it.
+```bash
+npx -y @mcpjam/cli@latest apps conformance --command node --args src/main.ts
+```
+
+- [ ] In the MCPJam Inspector, click **Add Server** under **Connect**, set **Connection Type** to **STDIO**, and enter `node` followed by the absolute path of your `mcp-server/src/main.ts` as the command. The first time, the Inspector asks whether it may run that command on your machine; allow it. Open the **Playground** and pick `open_trainer` in its tool list. Clear **skip** next to `exercise`, choose an exercise, and click **Run**. You don't need a model or an account for that. The trainer appears, Start counts in 4-3-2-1 and shows the chords, and the next bar moves up every four beats.
+- [ ] The trainer switches between light and dark when you switch the theme with the moon icon above the chat. Set the Inspector itself to **Light** first, under **Settings > Appearance**. The Inspector sometimes hands dark colors to a light preview: the trainer then looks half dark, although it follows the host correctly. If that happens, click **Reset** under **Client Context** and run the tool again.
+- [ ] After Stop, the trainer says that it told the chat which keys you practiced.
+- [ ] `AGENTS.md` now covers the UI: how to build it, why the server must work without the bundle, and the limits a host puts on an app.
+
+**Catch up.** Copy `mcp-server/` and `AGENTS.md` from `steps/13-mcp-app/` into the root of your fork, replacing yours, then run `npm install` and `npm run build` in `mcp-server/`.
