@@ -6,3 +6,5 @@ node_modules/
 
 # Responses saved by the step 2 curl demo
 session-1-function-calling-fundamentals/02-curl/turn-*.json
+
+model-comparison.html
