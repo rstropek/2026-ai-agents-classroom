@@ -9,7 +9,7 @@ function options(overrides: Partial<SheetOptions> = {}): SheetOptions {
     progression: TWO_BAR_II_V_I,
     rows: 4,
     keyOrder: 'balanced',
-    transposition: 'C',
+    instrument: 'C',
     random: seededRandom(42),
     ...overrides,
   };
@@ -108,8 +108,8 @@ describe('sheet cells', () => {
   });
 
   it('transposes for Bb, Eb and F instruments', () => {
-    const first = (transposition: SheetOptions['transposition']) =>
-      generateSheet(options({ keyOrder: 'fourths-up', rows: 1, transposition }))[0]?.[0];
+    const first = (instrument: SheetOptions['instrument']) =>
+      generateSheet(options({ keyOrder: 'fourths-up', rows: 1, instrument }))[0]?.[0];
     expect(first('Bb')).toMatchObject({ key: 'D', concertKey: 'C', text: 'Em7 – A7 | Dmaj7' });
     expect(first('Eb')).toMatchObject({ key: 'A', concertKey: 'C', text: 'Bm7 – E7 | Amaj7' });
     expect(first('F')).toMatchObject({ key: 'G', concertKey: 'C', text: 'Am7 – D7 | Gmaj7' });
@@ -117,7 +117,7 @@ describe('sheet cells', () => {
 
   it('keeps the balanced key order when transposing', () => {
     const concert = generateSheet(options({ random: seededRandom(7) }));
-    const bb = generateSheet(options({ random: seededRandom(7), transposition: 'Bb' }));
+    const bb = generateSheet(options({ random: seededRandom(7), instrument: 'Bb' }));
     expect(bb.map((row) => row.map((c) => c.concertKey))).toEqual(concert.map((row) => row.map((c) => c.key)));
   });
 

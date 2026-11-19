@@ -6,7 +6,7 @@ import * as z from 'zod/v4';
 import type { Key, Rating } from './chord-engine.ts';
 import { chordNotesFor } from './chord-notes.ts';
 import { findMistakes } from './progression-check.ts';
-import { KEY_ORDER_OPTIONS, progressionText, TRANSPOSITION_DESCRIPTIONS, TRANSPOSITIONS } from './sheet.ts';
+import { INSTRUMENT_DESCRIPTIONS, INSTRUMENTS, KEY_ORDER_OPTIONS, progressionText } from './sheet.ts';
 import {
   chosenProgression,
   exerciseChoiceError,
@@ -62,11 +62,11 @@ const openTrainerInput = z.strictObject({
       `How the keys follow each other (default "balanced"). ${KEY_ORDER_OPTIONS.map((o) => `"${o}": ${KEY_ORDER_TRAINER_DESCRIPTIONS[o]}`).join('; ')}.`,
     ),
   keyRatings: keyRatingsSchema.optional(),
-  transposition: z
-    .enum(TRANSPOSITIONS)
+  instrument: z
+    .enum(INSTRUMENTS)
     .default('C')
     .describe(
-      `The instrument the trainer shows the chords for (default "C"). ${TRANSPOSITIONS.map((t) => `"${t}": ${TRANSPOSITION_DESCRIPTIONS[t]}`).join('; ')}. ` +
+      `The instrument the trainer shows the chords for (default "C"). ${INSTRUMENTS.map((t) => `"${t}": ${INSTRUMENT_DESCRIPTIONS[t]}`).join('; ')}. ` +
         'With Bb, Eb or F the trainer shows the written key and chords; "keyRatings" are always concert keys.',
     ),
   tempo: z
@@ -85,7 +85,7 @@ const openTrainerOutput = z.object({
   progression: z.string().describe('The progression in the app syntax'),
   keyOrder: z.enum(KEY_ORDER_OPTIONS),
   keyRatings: keyRatingsSchema.describe('The key ratings the trainer uses; keys left out count as 1'),
-  transposition: z.enum(TRANSPOSITIONS),
+  instrument: z.enum(INSTRUMENTS),
   tempo: z.number().int().min(MIN_TEMPO).max(MAX_TEMPO),
   warnings: z
     .array(warningSchema)
@@ -102,7 +102,7 @@ function openTrainer(args: z.infer<typeof openTrainerInput>): CallToolResult {
     progression: progressionText(chosenProgression(args)),
     keyOrder: args.keyOrder,
     keyRatings: (args.keyRatings ?? {}) as Partial<Record<Key, Rating>>,
-    transposition: args.transposition,
+    instrument: args.instrument,
     tempo: args.tempo,
   };
   const warnings = args.progression ? findMistakes(args.progression) : [];
@@ -112,7 +112,7 @@ function openTrainer(args: z.infer<typeof openTrainerInput>): CallToolResult {
     : `the custom progression ${options.progression}`;
   const lines = [
     `Opened the chord trainer for ${what}: key order ${options.keyOrder}, ${options.tempo} BPM` +
-      (options.transposition === 'C' ? ', concert pitch.' : `, written for ${options.transposition} instruments.`),
+      (options.instrument === 'C' ? ', concert pitch.' : `, written for ${options.instrument} instruments.`),
     'The user starts and stops it in the trainer and can change the tempo there. It shows the current bar large and the ' +
       'next bar small and moves on every four beats. When the user stops, the trainer reports the keys they practiced.',
   ];
@@ -174,7 +174,7 @@ export function registerTrainer(server: McpServer, loadHtml: HtmlLoader = readTr
         'the current bar large and the next bar small and moves on to the next bar every four beats at the tempo, one key ' +
         'after the other. The user starts and stops it and sets the tempo there. Choose a predefined "exercise" by name ' +
         '(see list_exercises) or write a custom "progression" (check it with check_progression), and optionally the key ' +
-        'order, key ratings, transposition and tempo. When the user stops, the trainer adds the keys they practiced to the ' +
+        'order, key ratings, instrument and tempo. When the user stops, the trainer adds the keys they practiced to the ' +
         'conversation. In hosts without MCP Apps, use generate_exercise_sheet instead.',
       inputSchema: openTrainerInput,
       outputSchema: openTrainerOutput,

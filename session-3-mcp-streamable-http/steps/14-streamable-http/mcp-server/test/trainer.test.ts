@@ -19,7 +19,7 @@ function options(overrides: Partial<TrainerOptions> = {}): TrainerOptions {
     progression: IIVI,
     keyOrder: 'balanced',
     keyRatings: {},
-    transposition: 'C',
+    instrument: 'C',
     tempo: 60,
     ...overrides,
   };
@@ -59,7 +59,7 @@ describe('trainerSequence', () => {
   });
 
   it('shows written keys and chords for a Bb instrument and starts the fourths on concert C', () => {
-    const bars = take(4, { keyOrder: 'fourths-up', transposition: 'Bb' });
+    const bars = take(4, { keyOrder: 'fourths-up', instrument: 'Bb' });
     expect(bars.map((bar) => [bar.key, bar.concertKey])).toEqual([
       ['D', 'C'],
       ['D', 'C'],
@@ -76,7 +76,7 @@ describe('trainerSequence', () => {
       progression: 'I*maj7*',
       keyOrder: 'random',
       keyRatings: ratings,
-      transposition: 'Eb',
+      instrument: 'Eb',
     })) {
       counts.set(bar.concertKey, (counts.get(bar.concertKey) ?? 0) + 1);
     }
@@ -98,7 +98,7 @@ describe('PracticeLog', () => {
     log.record(bar('C', 'D'));
     log.stop(12_400);
 
-    const report = log.report(options({ transposition: 'Bb', exercise: 'ii–V–I' }));
+    const report = log.report(options({ instrument: 'Bb', exercise: 'ii–V–I' }));
     expect(report.practicedKeys).toEqual([
       { concertKey: 'C', writtenKey: 'D', bars: 3 },
       { concertKey: 'F', writtenKey: 'G', bars: 1 },

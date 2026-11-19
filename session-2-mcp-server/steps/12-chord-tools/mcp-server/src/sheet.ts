@@ -28,11 +28,11 @@ const ENGINE_KEY_ORDERS: Record<Exclude<KeyOrderOption, 'balanced'>, KeyOrder> =
 };
 
 /** Instruments the sheet can be written for: concert pitch (C) or a transposing instrument. */
-export const TRANSPOSITIONS = ['C', 'Bb', 'Eb', 'F'] as const;
-export type Transposition = (typeof TRANSPOSITIONS)[number];
+export const INSTRUMENTS = ['C', 'Bb', 'Eb', 'F'] as const;
+export type Instrument = (typeof INSTRUMENTS)[number];
 
 /** Half steps from the concert key up to the key the instrument reads. */
-const WRITTEN_OFFSET: Record<Transposition, number> = { C: 0, Bb: 2, Eb: 9, F: 7 };
+const WRITTEN_OFFSET: Record<Instrument, number> = { C: 0, Bb: 2, Eb: 9, F: 7 };
 
 /** Cells per row for the app's key orders, which have no natural row length. */
 export const KEYS_PER_ROW = FLAT_KEYS.length;
@@ -55,12 +55,12 @@ export interface SheetOptions {
   keys?: readonly Key[];
   /** Random and weighted cycle only: ratings 1–5 per concert key; keys left out count as 1. */
   ratings?: Partial<Record<Key, Rating>>;
-  transposition: Transposition;
+  instrument: Instrument;
   random: Random;
 }
 
 export interface SheetCell {
-  /** The key the player reads (written pitch); the concert key when the transposition is C. */
+  /** The key the player reads (written pitch); the concert key when the instrument is C. */
   key: Key;
   concertKey: Key;
   /** The chords of each bar, for example [['Dm7', 'G7'], ['Cmaj7']]. */
@@ -71,7 +71,7 @@ export interface SheetCell {
 
 /** A practice sheet: rows of cells, each cell the progression in one key. */
 export function generateSheet(options: SheetOptions): SheetCell[][] {
-  const offset = WRITTEN_OFFSET[options.transposition];
+  const offset = WRITTEN_OFFSET[options.instrument];
   return keyRows(options).map((row) =>
     row.map((concertKey) => {
       const key = transposeKey(concertKey, offset);
@@ -153,7 +153,7 @@ export const KEY_ORDER_DESCRIPTIONS: Record<KeyOrderOption, string> = {
   'fourths-down': `the app's Perfect 4th down order starting on C (C G D A …), cut into rows of ${KEYS_PER_ROW}`,
 };
 
-export const TRANSPOSITION_DESCRIPTIONS: Record<Transposition, string> = {
+export const INSTRUMENT_DESCRIPTIONS: Record<Instrument, string> = {
   C: 'concert pitch (piano, guitar, bass, flute, trombone, vibes)',
   Bb: 'Bb instruments (trumpet, tenor and soprano sax, clarinet): written a major second above concert pitch',
   Eb: 'Eb instruments (alto and baritone sax): written a major sixth above concert pitch',
@@ -164,18 +164,18 @@ export function formatSheet(sheet: {
   exercise: string | null;
   progression: string;
   keyOrder: KeyOrderOption;
-  transposition: Transposition;
+  instrument: Instrument;
   seed: number;
   rows: { cells: SheetCell[] }[];
 }): string {
-  const transposed = sheet.transposition !== 'C';
+  const transposed = sheet.instrument !== 'C';
   const lines = [
     sheet.exercise
       ? `Practice sheet: ${sheet.exercise} (${sheet.progression})`
       : `Practice sheet for the custom progression ${sheet.progression}`,
     `Key order: ${sheet.keyOrder} — ${KEY_ORDER_DESCRIPTIONS[sheet.keyOrder]}.`,
     transposed
-      ? `Written for ${TRANSPOSITION_DESCRIPTIONS[sheet.transposition]}. Keys and chords are written pitch; the concert key is in brackets.`
+      ? `Written for ${INSTRUMENT_DESCRIPTIONS[sheet.instrument]}. Keys and chords are written pitch; the concert key is in brackets.`
       : 'Concert pitch.',
     `Seed: ${sheet.seed} (pass it again to get the same sheet).`,
   ];

@@ -17,7 +17,7 @@ interface Sheet {
   exercise: string | null;
   progression: string;
   keyOrder: string;
-  transposition: string;
+  instrument: string;
   seed: number;
   rows: { cells: Cell[] }[];
   warnings: { code: string; message: string }[];
@@ -95,14 +95,14 @@ describe.each(transports)('MCP server over %s', (_name, connect) => {
 
   it('rejects a parameter that a tool does not know instead of ignoring it', async () => {
     const calls = [
-      { name: 'generate_exercise_sheet', arguments: { exercise: 'Major 7', instrument: 'Bb' } },
-      { name: 'check_progression', arguments: { progression: 'I*maj7*', instrument: 'Bb' } },
-      { name: 'open_trainer', arguments: { exercise: 'Major 7', instrument: 'Bb' } },
+      { name: 'generate_exercise_sheet', arguments: { exercise: 'Major 7', transposition: 'Bb' } },
+      { name: 'check_progression', arguments: { progression: 'I*maj7*', transposition: 'Bb' } },
+      { name: 'open_trainer', arguments: { exercise: 'Major 7', transposition: 'Bb' } },
     ];
     for (const call of calls) {
       const result = await client.callTool(call);
       expect(result.isError, call.name).toBe(true);
-      expect(textOf(result)).toContain('instrument');
+      expect(textOf(result)).toContain('transposition');
     }
   });
 
@@ -129,7 +129,7 @@ describe.each(transports)('MCP server over %s', (_name, connect) => {
     it('generates balanced rows for a Bb instrument', async () => {
       const result = await client.callTool({
         name: 'generate_exercise_sheet',
-        arguments: { exercise: 'ii7 - V7 - Imaj7 (two bars)', rows: 4, transposition: 'Bb', seed: 5 },
+        arguments: { exercise: 'ii7 - V7 - Imaj7 (two bars)', rows: 4, instrument: 'Bb', seed: 5 },
       });
       expect(result.isError).toBeFalsy();
       const sheet = result.structuredContent as unknown as Sheet;
@@ -253,7 +253,7 @@ describe.each(transports)('MCP server over %s', (_name, connect) => {
     it('returns the completed options for the app and a summary for the model', async () => {
       const result = await client.callTool({
         name: 'open_trainer',
-        arguments: { exercise: 'ii7 - V7 - Imaj7 (two bars)', transposition: 'Bb', tempo: 90 },
+        arguments: { exercise: 'ii7 - V7 - Imaj7 (two bars)', instrument: 'Bb', tempo: 90 },
       });
       expect(result.isError).toBeFalsy();
       expect(result.structuredContent).toEqual({
@@ -261,7 +261,7 @@ describe.each(transports)('MCP server over %s', (_name, connect) => {
         progression: expect.any(String),
         keyOrder: 'balanced',
         keyRatings: {},
-        transposition: 'Bb',
+        instrument: 'Bb',
         tempo: 90,
         warnings: [],
       });

@@ -13,6 +13,8 @@ import { checkProgression, findMistakes, formatCheck } from './progression-check
 import {
   formatSheet,
   generateSheet,
+  INSTRUMENT_DESCRIPTIONS,
+  INSTRUMENTS,
   KEY_ORDER_DESCRIPTIONS,
   KEY_ORDER_OPTIONS,
   KEYS_PER_ROW,
@@ -20,8 +22,6 @@ import {
   PREDEFINED_EXERCISES,
   PROGRESSION_SYNTAX,
   progressionText,
-  TRANSPOSITION_DESCRIPTIONS,
-  TRANSPOSITIONS,
 } from './sheet.ts';
 
 const MAX_SEED = 2 ** 32 - 1;
@@ -156,11 +156,11 @@ const generateInput = z.strictObject({
         `Default: all 12. Keys are named with flats: ${keyListText} (write Db, not C#).`,
     ),
   keyRatings: keyRatingsSchema.optional(),
-  transposition: z
-    .enum(TRANSPOSITIONS)
+  instrument: z
+    .enum(INSTRUMENTS)
     .default('C')
     .describe(
-      `The instrument the sheet is written for (default "C"). ${TRANSPOSITIONS.map((t) => `"${t}": ${TRANSPOSITION_DESCRIPTIONS[t]}`).join('; ')}. ` +
+      `The instrument the sheet is written for (default "C"). ${INSTRUMENTS.map((t) => `"${t}": ${INSTRUMENT_DESCRIPTIONS[t]}`).join('; ')}. ` +
         'With Bb, Eb or F each cell shows the written key and chords; "keys" and "keyRatings" are always concert keys.',
     ),
   seed: z
@@ -175,7 +175,7 @@ const generateInput = z.strictObject({
 });
 
 const cellSchema = z.object({
-  key: keySchema.describe('The key the player reads (written pitch; the concert key when transposition is "C")'),
+  key: keySchema.describe('The key the player reads (written pitch; the concert key when instrument is "C")'),
   concertKey: keySchema.describe('The key in concert pitch'),
   bars: z.array(z.array(z.string())).describe('The chords of each bar, for example [["Dm7", "G7"], ["Cmaj7"]]'),
   text: z.string().describe('The cell as text, for example "Dm7 – G7 | Cmaj7"'),
@@ -185,7 +185,7 @@ const generateOutput = z.object({
   exercise: z.string().nullable().describe('Name of the predefined exercise; null for a custom progression'),
   progression: z.string().describe('The progression in the app syntax'),
   keyOrder: z.enum(KEY_ORDER_OPTIONS),
-  transposition: z.enum(TRANSPOSITIONS),
+  instrument: z.enum(INSTRUMENTS),
   seed: z.number().int().min(0).max(MAX_SEED).describe('The seed used; pass it again to get the same sheet'),
   rows: z.array(z.object({ cells: z.array(cellSchema) })),
   warnings: z
@@ -219,7 +219,7 @@ function generateExerciseSheet(args: z.infer<typeof generateInput>): CallToolRes
     keyOrder: args.keyOrder,
     keys: args.keys,
     ratings: args.keyRatings as Partial<Record<Key, Rating>> | undefined,
-    transposition: args.transposition,
+    instrument: args.instrument,
     random: seededRandom(seed),
   });
 
@@ -227,7 +227,7 @@ function generateExerciseSheet(args: z.infer<typeof generateInput>): CallToolRes
     exercise: args.exercise ?? null,
     progression: progressionText(progression),
     keyOrder: args.keyOrder,
-    transposition: args.transposition,
+    instrument: args.instrument,
     seed,
     rows: sheet.map((cells) => ({ cells })),
     warnings: args.progression ? findMistakes(args.progression) : [],
@@ -304,7 +304,7 @@ export function registerTools(server: McpServer): void {
         'Choose a predefined "exercise" by name (see list_exercises) or write a custom "progression" (check it with check_progression). ' +
         `By default every row lists all 12 keys once in random order and a row never starts with the key the previous row ended on; ` +
         `the app's key orders (random, weighted-cycle with key ratings, fourths up or down) are available too, cut into rows of ${KEYS_PER_ROW}. ` +
-        'Set "transposition" for Bb, Eb or F instruments. The result reports the seed; pass it again to reproduce the sheet.',
+        'Set "instrument" to Bb, Eb or F for a transposing instrument. The result reports the seed; pass it again to reproduce the sheet.',
       inputSchema: generateInput,
       outputSchema: generateOutput,
       annotations: { readOnlyHint: true, openWorldHint: false },

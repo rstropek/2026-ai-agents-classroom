@@ -15,10 +15,10 @@ import {
 } from './chord-engine.ts';
 import {
   ENGINE_KEY_ORDERS,
+  INSTRUMENTS,
+  type Instrument,
   KEY_ORDER_OPTIONS,
   type KeyOrderOption,
-  TRANSPOSITIONS,
-  type Transposition,
   WRITTEN_OFFSET,
 } from './sheet.ts';
 
@@ -37,14 +37,14 @@ export interface TrainerOptions {
   keyOrder: KeyOrderOption;
   /** Ratings 1–5 per concert key; keys left out count as 1. Only used by "random" and "weighted-cycle". */
   keyRatings: Partial<Record<Key, Rating>>;
-  transposition: Transposition;
+  instrument: Instrument;
   /** Beats per minute; the bar changes every four beats. */
   tempo: number;
 }
 
 /** One bar as the trainer shows it. */
 export interface TrainerBar {
-  /** The key the player reads (written pitch; the concert key for transposition "C"). */
+  /** The key the player reads (written pitch; the concert key for instrument "C"). */
   key: Key;
   concertKey: Key;
   chords: Chord[];
@@ -62,10 +62,10 @@ export function clampTempo(tempo: number): number {
  * round has each of the twelve keys once in random order, never the same key twice in a row.
  */
 export function trainerSequence(
-  options: Pick<TrainerOptions, 'progression' | 'keyOrder' | 'keyRatings' | 'transposition'>,
+  options: Pick<TrainerOptions, 'progression' | 'keyOrder' | 'keyRatings' | 'instrument'>,
   random: Random = Math.random,
 ): { next(): TrainerBar } {
-  const offset = WRITTEN_OFFSET[options.transposition];
+  const offset = WRITTEN_OFFSET[options.instrument];
   const balanced = options.keyOrder === 'balanced';
   const keyOrder = ENGINE_KEY_ORDERS[options.keyOrder === 'balanced' ? 'weighted-cycle' : options.keyOrder];
   const keyRatings: KeyRatings = {
@@ -101,7 +101,7 @@ export function trainerSequence(
 
 /**
  * Every chord symbol the trainer can show for a progression: each alternative in each of the
- * twelve keys (the written keys cover all twelve for every transposition). The trainer fetches
+ * twelve keys (the written keys cover all twelve for every instrument). The trainer fetches
  * their notes once, before it starts, instead of asking the server on every bar.
  */
 export function allChordSymbols(progression: string): string[] {
@@ -127,7 +127,7 @@ export function barText(bar: TrainerBar): string {
 
 export interface PracticedKey {
   concertKey: Key;
-  /** The key the player read; equals concertKey for transposition "C". */
+  /** The key the player read; equals concertKey for instrument "C". */
   writtenKey: Key;
   /** Bars shown in this key while the trainer ran. */
   bars: number;
@@ -146,7 +146,7 @@ export interface PracticeReport {
   exercise: string | null;
   progression: string;
   keyOrder: KeyOrderOption;
-  transposition: Transposition;
+  instrument: Instrument;
   /** All keys practiced since the trainer was opened, in the order they first came up. */
   practicedKeys: PracticedKey[];
   /** Concert keys that have not come up yet. */
@@ -210,7 +210,7 @@ export class PracticeLog {
       exercise: options.exercise,
       progression: options.progression,
       keyOrder: options.keyOrder,
-      transposition: options.transposition,
+      instrument: options.instrument,
       practicedKeys,
       keysNotPracticed: FLAT_KEYS.filter((key) => !this.keys.has(key)),
       totalBars: practicedKeys.reduce((sum, k) => sum + k.bars, 0),
@@ -224,10 +224,10 @@ export function formatPracticeReport(report: PracticeReport): string {
   const exercise = report.exercise
     ? `"${report.exercise}" (${report.progression})`
     : `the custom progression ${report.progression}`;
-  const transposed = report.transposition !== 'C';
+  const transposed = report.instrument !== 'C';
   const lines = [
     `The user stopped the chord trainer. They practiced ${exercise}, key order ${report.keyOrder}` +
-      (transposed ? `, reading for a ${report.transposition} instrument.` : '.'),
+      (transposed ? `, reading for a ${report.instrument} instrument.` : '.'),
   ];
   if (report.practicedKeys.length === 0) {
     lines.push('No bars were played yet (the trainer was stopped during the count-in).');
@@ -278,8 +278,8 @@ export function parseTrainerOptions(value: unknown): TrainerOptions | null {
     typeof v.progression === 'string' &&
     typeof v.keyOrder === 'string' &&
     (KEY_ORDER_OPTIONS as readonly string[]).includes(v.keyOrder) &&
-    typeof v.transposition === 'string' &&
-    (TRANSPOSITIONS as readonly string[]).includes(v.transposition) &&
+    typeof v.instrument === 'string' &&
+    (INSTRUMENTS as readonly string[]).includes(v.instrument) &&
     typeof v.tempo === 'number' &&
     typeof v.keyRatings === 'object' &&
     v.keyRatings !== null;
@@ -291,7 +291,7 @@ export function parseTrainerOptions(value: unknown): TrainerOptions | null {
     progression: v.progression as string,
     keyOrder: v.keyOrder as KeyOrderOption,
     keyRatings: v.keyRatings as Partial<Record<Key, Rating>>,
-    transposition: v.transposition as Transposition,
+    instrument: v.instrument as Instrument,
     tempo: clampTempo(v.tempo as number),
   };
 }

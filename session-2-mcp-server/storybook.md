@@ -125,10 +125,10 @@ You're done when tests, lint and type check pass, the doctor still reports the s
 - [ ] This call, run in `mcp-server/`, returns a sheet with four rows in the `text` of its result. Each row has twelve different keys, and the chords are written for a Bb instrument: the ii–V–I of concert C reads `Em7 – A7 | Dmaj7`.
 
 ```bash
-npx -y @mcpjam/cli@latest tools call --command node --args src/main.ts --tool-name generate_exercise_sheet --tool-args '{"exercise":"ii7 - V7 - Imaj7 (two bars)","rows":4,"transposition":"Bb"}' --expect-success --validate-response
+npx -y @mcpjam/cli@latest tools call --command node --args src/main.ts --tool-name generate_exercise_sheet --tool-args '{"exercise":"ii7 - V7 - Imaj7 (two bars)","rows":4,"instrument":"Bb"}' --expect-success --validate-response
 ```
 
-Your agent may have named the parameters differently, for example `instrument` instead of `transposition`. `tools list` with the same `--command` and `--args` shows its names. With a wrong name the call fails, and the error names the parameter your server doesn't know. If it answers with a sheet at concert pitch instead, in which concert C reads `Dm7 – G7 | Cmaj7`, your server ignores unknown parameters, which the prompt asked it not to do.
+Your agent may have named the parameters differently, for example `transposition` instead of `instrument`. `tools list` with the same `--command` and `--args` shows its names. With a wrong name the call fails, and the error names the parameter your server doesn't know. If it answers with a sheet at concert pitch instead, in which concert C reads `Dm7 – G7 | Cmaj7`, your server ignores unknown parameters, which the prompt asked it not to do.
 
 - [ ] `check_progression` with `viidim7 - V*7*` warns that `dim` stands outside the asterisks:
 

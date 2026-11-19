@@ -146,7 +146,7 @@ export function Trainer({ app, options, beforeTeardown }: TrainerProps) {
 
   const countIn = running && beat < BEATS_PER_BAR;
   const beatInBar = beat >= 0 ? beat % BEATS_PER_BAR : -1;
-  const transposed = options.transposition !== 'C';
+  const transposed = options.instrument !== 'C';
   const exerciseName = options.exercise ?? 'Custom progression';
 
   return (
@@ -201,7 +201,7 @@ export function Trainer({ app, options, beforeTeardown }: TrainerProps) {
 
       <p className="details">
         {exerciseName}: <code>{options.progression}</code> · {KEY_ORDER_NAMES[options.keyOrder]}
-        {transposed ? ` · ${options.transposition} instrument (written keys, concert key in brackets)` : ''}
+        {transposed ? ` · ${options.instrument} instrument (written keys, concert key in brackets)` : ''}
       </p>
       {status ? (
         <p className={`status${status.error ? ' error' : ''}`} role="status">
