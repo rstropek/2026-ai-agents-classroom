@@ -1,0 +1,309 @@
+:host {
+  display: block;
+}
+
+// The nav shares the practice page's color band and stays at the top while the page scrolls
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  height: var(--app-bar-height);
+  background-color: var(--mat-sys-primary-container);
+  padding: 5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: auto;
+    // With the nav's 5px padding the logo sits on the 16px page gutter
+    padding-left: 11px;
+    color: var(--mat-sys-on-primary-container);
+    font-weight: calc(800 + var(--w));
+    font-stretch: 112%;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+  }
+
+  button,
+  a.mat-mdc-button {
+    color: var(--mat-sys-on-primary-container);
+    font-weight: calc(500 + var(--w));
+    font-stretch: 112%;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+  }
+}
+
+.mat-mdc-menu-item {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.selected-theme,
+.selected-theme mat-icon {
+  color: var(--mat-sys-primary);
+}
+
+// Pages size themselves in cqi: the width of <main>, without the window's scrollbar (dvw includes it)
+main {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+@media (max-width: 599.98px) {
+  nav {
+    padding: 2px 5px;
+
+    button.mat-mdc-button,
+    a.mat-mdc-button {
+      min-height: 32px;
+      height: 32px;
+    }
+  }
+}
+
+// Logo mark beside the name, in the theme's colors
+.logo-mark {
+  flex: none;
+  width: 30px;
+  height: 30px;
+
+  @media (max-width: 599.98px) {
+    width: 28px;
+    height: 28px;
+  }
+
+  .logo-card {
+    fill: var(--mat-sys-primary);
+  }
+
+  .logo-glyph,
+  .logo-motion {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .logo-glyph {
+    stroke: var(--mat-sys-on-primary);
+  }
+
+  .logo-motion {
+    stroke: var(--mat-sys-tertiary);
+  }
+}
+
+// Keyboard shortcuts, opened from the nav; ESC or a backdrop click closes it
+dialog {
+  width: min(420px, calc(100dvw - 32px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  border: none;
+  border-radius: 28px;
+  background-color: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface);
+  box-shadow: 0 24px 60px -24px rgb(0 0 0 / 0.5);
+  overflow: auto;
+
+  &::backdrop {
+    background-color: rgb(0 0 0 / 0.4);
+  }
+
+  &[open] {
+    animation: shortcuts-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[open] {
+      animation: none;
+    }
+  }
+}
+
+@keyframes shortcuts-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+.shortcuts-panel {
+  padding: 28px 28px 24px;
+
+  h2 {
+    margin: 0 0 8px;
+  }
+
+  h3 {
+    margin: 24px 0 10px;
+    font-size: 12px;
+    font-weight: calc(700 + var(--w));
+    font-stretch: 125%;
+    letter-spacing: 0.16em;
+    line-height: 1;
+    text-transform: uppercase;
+    text-align: left;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+// Key caps: the bottom edge gives them a pressable feel
+kbd {
+  display: inline-block;
+  min-width: 30px;
+  padding: 4px 8px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-bottom-width: 3px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  background-color: var(--mat-sys-surface-container-lowest);
+  color: var(--mat-sys-on-surface);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: calc(700 + var(--w));
+  font-stretch: 112%;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+// Arrow keys show the icon font's arrows; the text face's arrow glyph is too small to read
+.key-arrow {
+  width: 1em;
+  height: 1em;
+  margin-block: -0.3em; // keeps the key cap as tall as one with text
+  font-size: 1.3em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.shortcut-list {
+  margin: 0;
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  dt {
+    flex: 0 0 auto;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.tempo-shortcuts {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 6px 0;
+    border: 0;
+    background: none;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  thead th {
+    padding-top: 0;
+    font-size: 11.5px;
+    font-weight: calc(700 + var(--w));
+    font-stretch: 125%;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  tbody th {
+    width: 1%;
+    padding-right: 20px;
+    font-weight: calc(700 + var(--w));
+    font-stretch: 87%;
+    font-variant-numeric: tabular-nums;
+  }
+
+  tbody tr + tr th,
+  tbody tr + tr td {
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  // The "+" between key caps
+  td > span {
+    margin: 0 2px;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+// Install steps (Safari): numbered, with the Share icon as it looks in the browser bar
+.install-steps {
+  margin: 16px 0 0;
+  padding-inline-start: 22px;
+  line-height: 1.5;
+
+  li + li {
+    margin-top: 8px;
+  }
+
+  li::marker {
+    color: var(--mat-sys-primary);
+    font-weight: calc(800 + var(--w));
+  }
+
+  b {
+    font-weight: calc(650 + var(--w));
+  }
+}
+
+.install-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: calc(650 + var(--w));
+  white-space: nowrap;
+
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+}
+
+.install-note {
+  margin: 16px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  line-height: 1.5;
+}
+
+.shortcuts-close {
+  display: flex;
+  width: 100%;
+  margin-top: 28px;
+}
+
+// Text for screen readers only (e.g. the names of the arrow key caps)
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+}

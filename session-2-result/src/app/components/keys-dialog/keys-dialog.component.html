@@ -1,0 +1,24 @@
+<h2>Rate your keys</h2>
+<mat-dialog-content>
+  <p>How well do you know each key? Give one star to a key you still struggle with and five stars to a key you know
+    well. Keys with fewer stars come up more often.</p>
+
+  <div class="outer-key-container">
+    <div class="key-container">
+      @for (key of data.keysConfiguration.keys; track key.key) {
+      <div>{{ key.key }}</div>
+      @for (n of stars; track n) {
+      <mat-icon role="button" tabindex="0" fontIcon="star" [class.selected]="key.rating >= n"
+        [attr.aria-label]="key.key + ': ' + n + (n === 1 ? ' star' : ' stars')"
+        [attr.aria-pressed]="key.rating === n" (click)="setKeyRating(key.key, n)"
+        (keydown.enter)="setKeyRating(key.key, n)"
+        (keydown.space)="$event.preventDefault(); setKeyRating(key.key, n)"></mat-icon>
+      }
+      }
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button mat-button (click)="close()">Done</button>
+</mat-dialog-actions>
