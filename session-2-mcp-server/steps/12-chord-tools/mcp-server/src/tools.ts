@@ -90,7 +90,7 @@ function listExercises(): CallToolResult {
 // ---------------------------------------------------------------------------------------------
 // generate_exercise_sheet
 
-const generateInput = z.object({
+const generateInput = z.strictObject({
   exercise: z
     .enum(exerciseNames)
     .optional()
@@ -217,7 +217,7 @@ function generateExerciseSheet(args: z.infer<typeof generateInput>): CallToolRes
 // ---------------------------------------------------------------------------------------------
 // check_progression
 
-const checkInput = z.object({
+const checkInput = z.strictObject({
   progression: z
     .string()
     .describe('The custom progression to check, in the app syntax, for example "iim*7* - V*7* | I*maj7*".'),

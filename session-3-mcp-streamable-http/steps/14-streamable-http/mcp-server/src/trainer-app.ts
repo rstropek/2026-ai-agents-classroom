@@ -51,7 +51,7 @@ const KEY_ORDER_TRAINER_DESCRIPTIONS: Record<(typeof KEY_ORDER_OPTIONS)[number],
   'fourths-down': 'down a perfect fourth each time, starting on concert C (C G D A …)',
 };
 
-const openTrainerInput = z.object({
+const openTrainerInput = z.strictObject({
   exercise: exerciseSchema,
   progression: progressionSchema,
   keyOrder: z

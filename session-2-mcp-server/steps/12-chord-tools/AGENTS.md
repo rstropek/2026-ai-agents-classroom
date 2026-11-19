@@ -23,6 +23,7 @@ Changes to the chord engine get a test next to it. Run those tests in the reposi
 - The server imports the chord engine from the app's source instead of copying it, so the app and the server always read progressions the same way.
 - Transposition is the server's own addition: the chords are written for the instrument (Bb, Eb, F), while the keys to practice and the ratings stay at concert pitch, as the app stores them.
 - Every tool returns text for the model and structured content that matches its output schema. `--validate-response` checks both.
+- Tool input is strict (`z.strictObject`): a tool rejects a parameter it doesn't know. Zod's `z.object` drops unknown parameters silently, so a misspelled name would return a wrong result instead of an error.
 
 ## Traps
 

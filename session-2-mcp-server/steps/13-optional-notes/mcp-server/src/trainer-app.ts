@@ -52,7 +52,7 @@ const KEY_ORDER_TRAINER_DESCRIPTIONS: Record<(typeof KEY_ORDER_OPTIONS)[number],
   'fourths-down': 'down a perfect fourth each time, starting on concert C (C G D A …)',
 };
 
-const openTrainerInput = z.object({
+const openTrainerInput = z.strictObject({
   exercise: exerciseSchema,
   progression: progressionSchema,
   keyOrder: z
@@ -132,7 +132,7 @@ export const CHORD_NOTES_TOOL = 'chord_notes';
 /** Enough for every chord of a long custom progression with alternatives in all twelve keys. */
 export const MAX_CHORD_SYMBOLS = 2000;
 
-const chordNotesInput = z.object({
+const chordNotesInput = z.strictObject({
   chords: z
     .array(z.string().min(1).max(40))
     .min(1)

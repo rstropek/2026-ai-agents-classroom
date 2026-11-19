@@ -27,6 +27,7 @@ To see the trainer, start the MCPJam Inspector (`npx -y @mcpjam/inspector@latest
 - The server imports the chord engine from the app's source instead of copying it, so the app and the server always read progressions the same way. The trainer runs the same engine in the browser.
 - Transposition is the server's own addition: the chords are written for the instrument (Bb, Eb, F), while the keys to practice and the ratings stay at concert pitch, as the app stores them.
 - Every tool returns text for the model and structured content that matches its output schema. `--validate-response` checks both.
+- Tool input is strict (`z.strictObject`): a tool rejects a parameter it doesn't know. Zod's `z.object` drops unknown parameters silently, so a misspelled name would return a wrong result instead of an error.
 - MCP Apps with `@modelcontextprotocol/ext-apps` 2.x, the version for SDK v2. The trainer is React, bundled into one self-contained HTML file.
 - Without a bundle the server serves a placeholder page and warns on stderr, so `npm test` and the doctor work without a build.
 

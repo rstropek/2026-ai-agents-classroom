@@ -77,7 +77,7 @@ You're done when tests, lint and type check pass and the server doctor of the MC
 
 - [ ] `mcp-server/package.json` depends on `@modelcontextprotocol/server`, not on `@modelcontextprotocol/sdk`.
 - [ ] `npm test`, `npm run lint`, and `npm run typecheck` pass in `mcp-server/`.
-- [ ] `server doctor`, run in `mcp-server/`, reports `ready` and protocol version `2026-07-28`:
+- [ ] `server doctor`, run in `mcp-server/`, reports `Status: ready`. Add `--format json` to see the details, among them `"protocolVersion":"2026-07-28"`:
 
 ```bash
 npx -y @mcpjam/cli@latest server doctor --command node --args src/main.ts
@@ -89,14 +89,14 @@ npx -y @mcpjam/cli@latest server doctor --command node --args src/main.ts
 npx -y @mcpjam/cli@latest tools call --command node --args src/main.ts --tool-name hello --tool-args '{"name":"Karin"}'
 ```
 
-- [ ] Nothing in `src/` writes to stdout with `console.log`. Logging goes to stderr.
-- [ ] `AGENTS.md` in the root of your fork fits on one screen. It names the commands and explains what the code doesn't: why stdout is off limits, why the client must ask for 2026-07-28, and where the documentation is.
+- [ ] Nothing in `mcp-server/src/` writes to stdout with `console.log`. Logging goes to stderr.
+- [ ] `AGENTS.md` in the root of your fork fits on one page. It names the commands and explains what the code doesn't: why stdout is off limits, why the client must ask for 2026-07-28, and where the documentation is.
 
 **Catch up.** Copy `mcp-server/` and `AGENTS.md` from `steps/11-hello-mcp/` into the root of your fork, and run `npm install` in `mcp-server/`.
 
 ## Step 12: practice sheets as tools
 
-**Goal.** Replace `hello` with tools that build on the chord engine: list the exercises, generate a practice sheet, and check a custom progression. The step is about tool design: options a model can fill in without guessing, readable text for the model, and structured content for programs.
+**Goal.** Replace `hello` with tools that build on the chord engine: list the exercises, generate a practice sheet, and check a custom progression. The step is about tool design: options a model can fill in without guessing, input that is validated strictly, readable text for the model, and structured content for programs.
 
 **Prompt.**
 
@@ -112,7 +112,7 @@ The tools I have in mind:
 - generate_exercise_sheet: the user picks a predefined exercise or writes their own progression, and chooses the number of rows, the key order (balanced rows as described above, or one of the app's key orders), which keys to practice, and ratings per key as in the app. On top of that it transposes for Bb, Eb and F instruments, which the app can't do: the chords are written for the instrument, while the keys and the ratings stay at concert pitch. A seed makes a sheet reproducible.
 - check_progression: shows how the app reads a custom progression in a given key, and warns about typical mistakes, such as a chord type outside the asterisks
 
-A model calls these tools, so describe them and their parameters well enough that it never has to guess. Return readable text for the model and structured content for programs.
+A model calls these tools, so describe them and their parameters well enough that it never has to guess. Validate the input strictly: a tool rejects a parameter it doesn't know instead of ignoring it, so that a misspelled name can't pass unnoticed. Return readable text for the model and structured content for programs.
 
 Test the sheet logic, and test each tool the way a host talks to the server. Update AGENTS.md with what this step taught us that the code doesn't tell, and shorten or drop what no longer earns its place, so that it stays on one page.
 
@@ -122,19 +122,19 @@ You're done when tests, lint and type check pass, the doctor still reports the s
 **Verify.**
 
 - [ ] `npm test`, `npm run lint`, and `npm run typecheck` pass in `mcp-server/`, and the server imports the chord engine instead of copying it.
-- [ ] This call, run in `mcp-server/`, prints four rows. Each row has twelve different keys, and the chords are written for a Bb instrument: the ii–V–I of concert C reads `Em7 – A7 | Dmaj7`.
+- [ ] This call, run in `mcp-server/`, returns a sheet with four rows in the `text` of its result. Each row has twelve different keys, and the chords are written for a Bb instrument: the ii–V–I of concert C reads `Em7 – A7 | Dmaj7`.
 
 ```bash
 npx -y @mcpjam/cli@latest tools call --command node --args src/main.ts --tool-name generate_exercise_sheet --tool-args '{"exercise":"ii7 - V7 - Imaj7 (two bars)","rows":4,"transposition":"Bb"}' --expect-success --validate-response
 ```
+
+Your agent may have named the parameters differently, for example `instrument` instead of `transposition`. `tools list` with the same `--command` and `--args` shows its names. With a wrong name the call fails, and the error names the parameter your server doesn't know. If it answers with a sheet at concert pitch instead, in which concert C reads `Dm7 – G7 | Cmaj7`, your server ignores unknown parameters, which the prompt asked it not to do.
 
 - [ ] `check_progression` with `viidim7 - V*7*` warns that `dim` stands outside the asterisks:
 
 ```bash
 npx -y @mcpjam/cli@latest tools call --command node --args src/main.ts --tool-name check_progression --tool-args '{"progression":"viidim7 - V*7*"}'
 ```
-
-Your agent may have named the parameters differently. `tools list` with the same `--command` and `--args` shows its names.
 
 - [ ] `AGENTS.md` mentions what the step added that the code doesn't explain, such as the decision to import the engine and what the transposition means, without describing the tools one by one.
 
@@ -171,7 +171,7 @@ npx -y @mcpjam/cli@latest apps conformance --command node --args src/main.ts
 - [ ] The trainer switches between light and dark when you switch the theme with the moon icon above the chat. Set the Inspector itself to **Light** first, under **Settings > Appearance**. The Inspector sometimes hands dark colors to a light preview: the trainer then looks half dark, although it follows the host correctly. If that happens, click **Reset** under **Client Context** and run the tool again.
 - [ ] After Stop, the trainer says that it told the chat which keys you practiced.
 - [ ] Above the trainer, **Sandbox** may report blocked `eval` requests. That is zod, which the SDK uses: it tests once whether `eval` is allowed and works without it.
-- [ ] `AGENTS.md` now covers the UI: how to build it, why the server must work without the bundle, and the limits a host puts on an app.
+- [ ] `AGENTS.md` now covers the UI: how to build it, that the tests run without the bundle, and the limits a host puts on an app.
 
 **Catch up.** Copy `mcp-server/` and `AGENTS.md` from `steps/13-mcp-app/` into the root of your fork, replacing yours, then run `npm install` and `npm run build` in `mcp-server/`.
 
@@ -197,13 +197,13 @@ You're done when tests, lint and type check pass, the build creates the bundle, 
 
 - [ ] `npm test`, `npm run lint`, and `npm run typecheck` pass, and `npm run build` writes one HTML file.
 - [ ] `apps conformance` from step 13 still passes.
-- [ ] `tools list` shows the new tool with `"visibility":["app"]` in its `_meta`. Hosts read that and don't offer the tool to the model:
+- [ ] `tools list` shows the new tool with `visibility` set to `app` under `ui` in its `_meta`. Hosts read that and don't offer the tool to the model:
 
 ```bash
 npx -y @mcpjam/cli@latest tools list --command node --args src/main.ts
 ```
 
-- [ ] In the MCPJam Inspector, the tool list of the **Playground** shows the new tool with visibility `app`. Run `open_trainer` as in step 13 with the exercise `ii7 - V7 - Imaj7 (two bars)` and the transposition for Bb. Below the trainer, the Inspector lists one call of the new tool: the trainer made it, not the model. After Start you see a staff below the chords, and its notes match them: `Em7` shows E, G, B, and D.
+- [ ] In the MCPJam Inspector, the tool list of the **Playground** shows the new tool with visibility `app`. Run `open_trainer` as in step 13 with the exercise `ii7 - V7 - Imaj7 (two bars)` for a Bb instrument. Below the trainer, the Inspector lists one call of the new tool: the trainer made it, not the model. After Start you see a staff below the chords, and its notes match them: `Em7` shows E, G, B, and D.
 - [ ] The staff is readable in the light and the dark theme.
 - [ ] `AGENTS.md` names the decision to convert on the server and why the tool is hidden from the model.
 

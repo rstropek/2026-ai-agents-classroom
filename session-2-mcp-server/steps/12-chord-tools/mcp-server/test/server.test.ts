@@ -66,6 +66,18 @@ describe('MCP server over stdio', () => {
     }
   });
 
+  it('rejects a parameter that a tool does not know instead of ignoring it', async () => {
+    const calls = [
+      { name: 'generate_exercise_sheet', arguments: { exercise: 'Major 7', instrument: 'Bb' } },
+      { name: 'check_progression', arguments: { progression: 'I*maj7*', instrument: 'Bb' } },
+    ];
+    for (const call of calls) {
+      const result = await client.callTool(call);
+      expect(result.isError, call.name).toBe(true);
+      expect(textOf(result)).toContain('instrument');
+    }
+  });
+
   describe('list_exercises', () => {
     it('lists the predefined exercises and the progression syntax', async () => {
       const result = await client.callTool({ name: 'list_exercises', arguments: {} });
